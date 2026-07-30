@@ -1,0 +1,35 @@
+.sidebar {
+  position: fixed;
+  top: 64px;
+  left: 0;
+
+  width: 240px;
+  height: calc(100vh - 64px);
+
+  padding-top: 16px;
+
+  background: #ffffff;
+  border-right: 1px solid #e0e0e0;
+
+  box-sizing: border-box;
+  overflow-y: auto;
+
+  z-index: 1000;
+}
+
+.sidebar a.mat-mdc-list-item {
+  width: calc(100% - 20px);
+  height: 48px;
+  margin: 4px 12px;
+  border-radius: 24px;
+  box-sizing: border-box;
+}
+
+.sidebar a.mat-mdc-list-item.active-link {
+  background: rgba(25, 118, 210, 0.12);
+  font-weight: 600;
+}
+
+.sidebar mat-icon {
+  margin-right: 12px;
+}

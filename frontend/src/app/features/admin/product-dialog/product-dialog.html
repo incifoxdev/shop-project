@@ -1,0 +1,133 @@
+<h2 mat-dialog-title>
+  {{ isEditing ? 'Editar producto' : 'Nuevo producto' }}
+</h2>
+
+<form
+  [formGroup]="form"
+  (ngSubmit)="save()"
+>
+  <mat-dialog-content class="dialog-content">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre</mat-label>
+
+      <input
+        matInput
+        formControlName="name"
+        autocomplete="off"
+      >
+
+      <mat-icon matSuffix>inventory_2</mat-icon>
+
+      @if (
+        form.controls.name.hasError('required') &&
+        form.controls.name.touched
+      ) {
+        <mat-error>
+          El nombre es obligatorio.
+        </mat-error>
+      }
+
+      @if (
+        form.controls.name.hasError('minlength') &&
+        form.controls.name.touched
+      ) {
+        <mat-error>
+          El nombre debe tener al menos 2 caracteres.
+        </mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Precio</mat-label>
+
+      <input
+        matInput
+        type="number"
+        min="0.01"
+        step="0.01"
+        formControlName="price"
+      >
+
+      <span matTextPrefix>$&nbsp;</span>
+
+      @if (
+        form.controls.price.hasError('required') &&
+        form.controls.price.touched
+      ) {
+        <mat-error>
+          El precio es obligatorio.
+        </mat-error>
+      }
+
+      @if (
+        form.controls.price.hasError('min') &&
+        form.controls.price.touched
+      ) {
+        <mat-error>
+          El precio debe ser mayor que 0.
+        </mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Stock</mat-label>
+
+      <input
+        matInput
+        type="number"
+        min="0"
+        step="1"
+        formControlName="stock"
+      >
+
+      <mat-icon matSuffix>warehouse</mat-icon>
+
+      @if (
+        form.controls.stock.hasError('required') &&
+        form.controls.stock.touched
+      ) {
+        <mat-error>
+          El stock es obligatorio.
+        </mat-error>
+      }
+
+      @if (
+        (
+          form.controls.stock.hasError('min') ||
+          form.controls.stock.hasError('pattern')
+        ) &&
+        form.controls.stock.touched
+      ) {
+        <mat-error>
+          El stock debe ser un número entero mayor o igual a 0.
+        </mat-error>
+      }
+    </mat-form-field>
+
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+
+    <button
+      mat-button
+      type="button"
+      (click)="cancel()"
+    >
+      Cancelar
+    </button>
+
+    <button
+      mat-flat-button
+      type="submit"
+      [disabled]="form.invalid"
+    >
+      <mat-icon>
+        {{ isEditing ? 'save' : 'add' }}
+      </mat-icon>
+
+      {{ isEditing ? 'Guardar cambios' : 'Crear producto' }}
+    </button>
+
+  </mat-dialog-actions>
+</form>

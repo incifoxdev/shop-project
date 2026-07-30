@@ -1,0 +1,40 @@
+.login-container {
+
+  height: 100vh;
+
+  display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+  background:#f5f5f5;
+
+}
+
+
+.login-card {
+
+  width:350px;
+
+  padding:30px;
+
+}
+
+
+form {
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:15px;
+
+}
+
+
+h2 {
+
+  text-align:center;
+
+}

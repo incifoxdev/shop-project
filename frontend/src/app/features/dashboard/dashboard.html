@@ -1,0 +1,597 @@
+<section class="dashboard">
+
+  <div class="dashboard-header">
+
+    <div>
+      <h1>Dashboard administrativo</h1>
+
+      <p>
+        Bienvenido, {{ email }}
+      </p>
+    </div>
+
+  </div>
+
+  @if (loading) {
+
+    <div class="status-message">
+      <mat-icon>hourglass_top</mat-icon>
+      <span>Cargando información...</span>
+    </div>
+
+  }
+
+  @if (errorMessage) {
+
+    <div class="status-message error-message">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+  }
+
+  @if (!loading && !errorMessage && stats) {
+
+    <!-- Estadísticas globales -->
+
+    <div class="stats-grid">
+
+      <mat-card class="stat-card">
+
+        <mat-card-content>
+
+          <div class="stat-content">
+
+            <div class="stat-icon products-icon">
+              <mat-icon>inventory_2</mat-icon>
+            </div>
+
+            <div class="stat-info">
+
+              <span class="stat-label">
+                Productos
+              </span>
+
+              <strong class="stat-value">
+                {{ stats.totalProducts }}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </mat-card-content>
+
+      </mat-card>
+
+      <mat-card class="stat-card">
+
+        <mat-card-content>
+
+          <div class="stat-content">
+
+            <div class="stat-icon users-icon">
+              <mat-icon>group</mat-icon>
+            </div>
+
+            <div class="stat-info">
+
+              <span class="stat-label">
+                Usuarios
+              </span>
+
+              <strong class="stat-value">
+                {{ stats.totalUsers }}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </mat-card-content>
+
+      </mat-card>
+
+      <mat-card class="stat-card">
+
+        <mat-card-content>
+
+          <div class="stat-content">
+
+            <div class="stat-icon sales-icon">
+              <mat-icon>shopping_cart_checkout</mat-icon>
+            </div>
+
+            <div class="stat-info">
+
+              <span class="stat-label">
+                Ventas
+              </span>
+
+              <strong class="stat-value">
+                {{ stats.totalSales }}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </mat-card-content>
+
+      </mat-card>
+
+      <mat-card class="stat-card">
+
+        <mat-card-content>
+
+          <div class="stat-content">
+
+            <div class="stat-icon revenue-icon">
+              <mat-icon>payments</mat-icon>
+            </div>
+
+            <div class="stat-info">
+
+              <span class="stat-label">
+                Ingresos totales
+              </span>
+
+              <strong class="stat-value">
+                {{
+                  stats.totalRevenue
+                    | currency:'USD':'symbol':'1.2-2'
+                }}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </mat-card-content>
+
+      </mat-card>
+
+    </div>
+
+    <!-- Estadísticas personales y de inventario -->
+
+    <div class="secondary-stats-grid">
+
+      <mat-card class="stat-card">
+
+        <mat-card-content>
+
+          <div class="stat-content">
+
+            <div class="stat-icon today-sales-icon">
+              <mat-icon>today</mat-icon>
+            </div>
+
+            <div class="stat-info">
+
+              <span class="stat-label">
+                Compras propias de hoy
+              </span>
+
+              <strong class="stat-value">
+                {{ salesToday }}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </mat-card-content>
+
+      </mat-card>
+
+      <mat-card class="stat-card">
+
+        <mat-card-content>
+
+          <div class="stat-content">
+
+            <div class="stat-icon month-sales-icon">
+              <mat-icon>calendar_month</mat-icon>
+            </div>
+
+            <div class="stat-info">
+
+              <span class="stat-label">
+                Total propio este mes
+              </span>
+
+              <strong class="stat-value">
+                {{
+                  salesThisMonth
+                    | currency:'USD':'symbol':'1.2-2'
+                }}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </mat-card-content>
+
+      </mat-card>
+
+      <mat-card class="stat-card">
+
+        <mat-card-content>
+
+          <div class="stat-content">
+
+            <div class="stat-icon warning-icon">
+              <mat-icon>warning_amber</mat-icon>
+            </div>
+
+            <div class="stat-info">
+
+              <span class="stat-label">
+                Productos con poco stock
+              </span>
+
+              <strong class="stat-value">
+                {{ lowStockProducts }}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </mat-card-content>
+
+      </mat-card>
+
+    </div>
+
+    <!-- Gráfico de ventas mensuales -->
+
+    <mat-card class="chart-card">
+
+      <mat-card-header>
+
+        <mat-icon mat-card-avatar>
+          bar_chart
+        </mat-icon>
+
+        <mat-card-title>
+          Ventas por mes
+        </mat-card-title>
+
+        <mat-card-subtitle>
+          Ingresos globales de los últimos 6 meses
+        </mat-card-subtitle>
+
+      </mat-card-header>
+
+      <mat-card-content>
+
+        <div class="chart-container">
+          <canvas #salesChart></canvas>
+        </div>
+
+      </mat-card-content>
+
+    </mat-card>
+    <!-- Top 5 productos más vendidos -->
+
+<mat-card class="chart-card">
+
+  <mat-card-header>
+
+    <mat-icon mat-card-avatar>
+      workspace_premium
+    </mat-icon>
+
+    <mat-card-title>
+      Top 5 productos más vendidos
+    </mat-card-title>
+
+    <mat-card-subtitle>
+      Productos ordenados por cantidad de unidades vendidas
+    </mat-card-subtitle>
+
+  </mat-card-header>
+
+  <mat-card-content>
+
+    @if (stats.topProducts.length === 0) {
+
+      <div class="chart-empty">
+
+        <mat-icon>info_outline</mat-icon>
+
+        <p>
+          Todavía no existen productos vendidos.
+        </p>
+
+      </div>
+
+    } @else {
+
+      <div class="chart-container top-products-chart-container">
+        <canvas #topProductsChart></canvas>
+      </div>
+
+    }
+
+  </mat-card-content>
+
+</mat-card>
+
+    <!-- Contenido principal -->
+
+    <div class="dashboard-content">
+
+      <!-- Actividad reciente -->
+
+      <mat-card class="activity-card">
+
+        <mat-card-header>
+
+          <mat-icon mat-card-avatar>
+            timeline
+          </mat-icon>
+
+          <mat-card-title>
+            Actividad reciente
+          </mat-card-title>
+
+          <mat-card-subtitle>
+            Últimas compras del usuario autenticado
+          </mat-card-subtitle>
+
+        </mat-card-header>
+
+        <mat-card-content>
+
+          @if (recentSales.length === 0) {
+
+            <div class="activity-empty">
+
+              <mat-icon>info</mat-icon>
+
+              <p>
+                Todavía no hay compras registradas.
+              </p>
+
+            </div>
+
+          } @else {
+
+            <div class="activity-timeline">
+
+              @for (
+                sale of recentSales;
+                track sale.id;
+                let last = $last
+              ) {
+
+                <div class="timeline-item">
+
+                  <div class="timeline-marker">
+
+                    <div class="timeline-icon">
+                      <mat-icon>shopping_bag</mat-icon>
+                    </div>
+
+                    @if (!last) {
+                      <div class="timeline-line"></div>
+                    }
+
+                  </div>
+
+                  <div class="timeline-content">
+
+                    <div class="timeline-header">
+
+                      <div>
+
+                        <h3>
+                          Compra {{ getSaleNumber(sale.id) }}
+                        </h3>
+
+                        <span class="timeline-date">
+                          {{
+                            sale.createdAt
+                              | date:'dd/MM/yyyy HH:mm'
+                          }}
+                        </span>
+
+                      </div>
+
+                      <strong class="timeline-total">
+                        {{
+                          sale.total
+                            | currency:'USD':'symbol':'1.2-2'
+                        }}
+                      </strong>
+
+                    </div>
+
+                    <p>
+                      Compra realizada correctamente.
+                    </p>
+
+                  </div>
+
+                </div>
+
+              }
+
+            </div>
+
+          }
+
+        </mat-card-content>
+
+      </mat-card>
+
+      <!-- Productos con poco stock -->
+
+      <mat-card class="low-stock-card">
+
+        <mat-card-header>
+
+          <mat-icon mat-card-avatar>
+            warning_amber
+          </mat-icon>
+
+          <mat-card-title>
+            Productos con poco stock
+          </mat-card-title>
+
+          <mat-card-subtitle>
+            Productos con 5 unidades o menos
+          </mat-card-subtitle>
+
+        </mat-card-header>
+
+        <mat-card-content>
+
+          @if (lowStockProductList.length === 0) {
+
+            <div class="low-stock-empty">
+
+              <mat-icon>check_circle</mat-icon>
+
+              <div>
+
+                <strong>
+                  Todo correcto
+                </strong>
+
+                <p>
+                  No existen productos con stock crítico.
+                </p>
+
+              </div>
+
+            </div>
+
+          } @else {
+
+            <div class="low-stock-list">
+
+              @for (
+                product of lowStockProductList;
+                track product.id
+              ) {
+
+                <div class="low-stock-item">
+
+                  <div class="low-stock-product">
+
+                    <div class="low-stock-icon">
+                      <mat-icon>inventory_2</mat-icon>
+                    </div>
+
+                    <div>
+
+                      <strong>
+                        {{ product.name }}
+                      </strong>
+
+                      <span>
+                        Precio:
+                        {{
+                          product.price
+                            | currency:'USD':'symbol':'1.2-2'
+                        }}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                  <span
+                    class="stock-badge"
+                    [class.out-of-stock]="product.stock === 0"
+                  >
+                    Stock: {{ product.stock }}
+                  </span>
+
+                </div>
+
+              }
+
+            </div>
+
+          }
+
+        </mat-card-content>
+
+      </mat-card>
+
+<!-- Producto estrella -->
+
+@if (stats.topProducts.length > 0) {
+
+<mat-card class="featured-product-card">
+
+  <mat-card-header>
+
+    <mat-icon mat-card-avatar>
+      emoji_events
+    </mat-icon>
+
+    <mat-card-title>
+      Producto estrella
+    </mat-card-title>
+
+    <mat-card-subtitle>
+      Producto más vendido hasta el momento
+    </mat-card-subtitle>
+
+  </mat-card-header>
+
+  <mat-card-content>
+
+    <div class="featured-product">
+
+      <div class="featured-product-info">
+
+        <h2>
+          {{ stats.topProducts[0].productName }}
+        </h2>
+
+        <p>
+          <strong>Unidades vendidas:</strong>
+          {{ stats.topProducts[0].quantitySold }}
+        </p>
+
+        <p>
+          <strong>Ingresos generados:</strong>
+          {{
+            stats.topProducts[0].revenue
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </p>
+
+      </div>
+
+      <div class="featured-product-icon">
+
+        <mat-icon>
+          workspace_premium
+        </mat-icon>
+
+      </div>
+
+    </div>
+
+  </mat-card-content>
+
+</mat-card>
+
+}
+
+<!-- Contenido principal -->
+
+    </div>
+
+  }
+
+</section>

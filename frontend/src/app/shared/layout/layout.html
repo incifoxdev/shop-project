@@ -1,0 +1,52 @@
+<mat-toolbar color="primary">
+
+  <span>🛒 Shop</span>
+
+  <span class="spacer"></span>
+
+  <button
+    mat-button
+    routerLink="/products">
+
+    Productos
+
+  </button>
+
+  <button
+    mat-button
+    routerLink="/cart">
+
+    Carrito
+
+  </button>
+
+  <button
+    mat-button
+    routerLink="/sales">
+
+    Historial
+
+  </button>
+
+  <span class="spacer"></span>
+
+  <span>
+    {{ email }}
+  </span>
+
+  <button
+    mat-button
+    (click)="logout()">
+
+    Cerrar sesión
+
+  </button>
+
+</mat-toolbar>
+
+
+<div class="content">
+
+  <router-outlet></router-outlet>
+
+</div>

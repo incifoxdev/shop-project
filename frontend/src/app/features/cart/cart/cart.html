@@ -1,0 +1,342 @@
+<section class="cart-page">
+
+  <header class="cart-header">
+
+    <div>
+      <span class="page-label">
+        Tu compra
+      </span>
+
+      <h1>Carrito de compras</h1>
+
+      <p>
+        Revisa los productos seleccionados antes de
+        finalizar tu compra.
+      </p>
+    </div>
+
+    <div class="cart-header-actions">
+
+      @if (cart && cart.totalItems > 0) {
+
+        <button
+          mat-stroked-button
+          type="button"
+          class="clear-cart-button"
+          [disabled]="isCartActionInProgress()"
+          (click)="clearCart()">
+
+          <mat-icon>
+            {{
+              clearingCart
+                ? 'hourglass_top'
+                : 'delete_sweep'
+            }}
+          </mat-icon>
+
+          <span>
+            {{
+              clearingCart
+                ? 'Vaciando...'
+                : 'Vaciar carrito'
+            }}
+          </span>
+
+        </button>
+
+      }
+
+      <div class="cart-counter">
+
+        <mat-icon>shopping_cart</mat-icon>
+
+        <div>
+          <strong>{{ cart?.totalItems || 0 }}</strong>
+
+          <span>
+            {{
+              (cart?.totalItems || 0) === 1
+                ? 'producto'
+                : 'productos'
+            }}
+          </span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </header>
+
+  @if (loading) {
+
+    <div class="state-card">
+
+      <mat-spinner diameter="45"></mat-spinner>
+
+      <p>Cargando carrito...</p>
+
+    </div>
+
+  } @else if (errorMessage) {
+
+    <div class="state-card error-state">
+
+      <mat-icon>error_outline</mat-icon>
+
+      <h2>No pudimos cargar el carrito</h2>
+
+      <p>{{ errorMessage }}</p>
+
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="loadCart()">
+
+        <mat-icon>refresh</mat-icon>
+
+        <span>Intentar nuevamente</span>
+
+      </button>
+
+    </div>
+
+  } @else if (!cart || cart.totalItems === 0) {
+
+    <div class="state-card empty-state">
+
+      <mat-icon>remove_shopping_cart</mat-icon>
+
+      <h2>Tu carrito está vacío</h2>
+
+      <p>
+        Agrega productos desde el catálogo para
+        comenzar tu compra.
+      </p>
+
+    </div>
+
+  } @else {
+
+    <div class="cart-layout">
+
+      <div class="cart-items">
+
+        @for (
+          item of cart.items;
+          track item.productId
+        ) {
+
+          <mat-card
+            class="cart-item-card"
+            [class.item-processing]="
+              isUpdating(item) ||
+              isRemoving(item)
+            ">
+
+            <div class="product-icon">
+              <mat-icon>inventory_2</mat-icon>
+            </div>
+
+            <div class="product-info">
+
+              <h2>{{ item.productName }}</h2>
+
+              <span class="unit-price">
+                Precio unitario:
+                {{ item.price | currency:'USD' }}
+              </span>
+
+              <button
+                mat-button
+                type="button"
+                class="remove-button"
+                [disabled]="isCartActionInProgress()"
+                (click)="removeProduct(item)">
+
+                <mat-icon>
+                  {{
+                    isRemoving(item)
+                      ? 'hourglass_top'
+                      : 'delete_outline'
+                  }}
+                </mat-icon>
+
+                <span>
+                  {{
+                    isRemoving(item)
+                      ? 'Eliminando...'
+                      : 'Eliminar'
+                  }}
+                </span>
+
+              </button>
+
+            </div>
+
+            <div class="quantity-section">
+
+              <span class="section-label">
+                Cantidad
+              </span>
+
+              <div class="quantity-control">
+
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Disminuir cantidad"
+                  [disabled]="
+                    item.quantity <= 1 ||
+                    isCartActionInProgress()
+                  "
+                  (click)="decreaseQuantity(item)">
+
+                  <mat-icon>remove</mat-icon>
+
+                </button>
+
+                <span class="quantity-value">
+                  {{ item.quantity }}
+                </span>
+
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Aumentar cantidad"
+                  [disabled]="isCartActionInProgress()"
+                  (click)="increaseQuantity(item)">
+
+                  <mat-icon>add</mat-icon>
+
+                </button>
+
+              </div>
+
+              @if (isUpdating(item)) {
+
+                <span class="updating-label">
+                  Actualizando...
+                </span>
+
+              }
+
+            </div>
+
+            <div class="subtotal-section">
+
+              <span class="section-label">
+                Subtotal
+              </span>
+
+              <strong>
+                {{
+                  getSubtotal(
+                    item.price,
+                    item.quantity
+                  ) | currency:'USD'
+                }}
+              </strong>
+
+            </div>
+
+          </mat-card>
+
+        }
+
+      </div>
+
+      <aside class="summary-column">
+
+        <mat-card class="summary-card">
+
+          <div class="summary-header">
+
+            <mat-icon>receipt_long</mat-icon>
+
+            <h2>Resumen de compra</h2>
+
+          </div>
+
+          <div class="summary-row">
+
+            <span>Unidades</span>
+
+            <strong>
+              {{ cart.totalItems }}
+            </strong>
+
+          </div>
+
+          <div class="summary-row">
+
+            <span>Productos distintos</span>
+
+            <strong>
+              {{ cart.items.length }}
+            </strong>
+
+          </div>
+
+          <div class="summary-row">
+
+            <span>Subtotal</span>
+
+            <strong>
+              {{ cart.totalAmount | currency:'USD' }}
+            </strong>
+
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-total">
+
+            <span>Total a pagar</span>
+
+            <strong>
+              {{ cart.totalAmount | currency:'USD' }}
+            </strong>
+
+          </div>
+
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            class="checkout-button"
+            [disabled]="isCartActionInProgress()"
+            (click)="checkout()">
+
+            <mat-icon>
+              {{
+                processingCheckout
+                  ? 'hourglass_top'
+                  : 'payments'
+              }}
+            </mat-icon>
+
+            <span>
+              {{
+                processingCheckout
+                  ? 'Procesando compra...'
+                  : 'Finalizar compra'
+              }}
+            </span>
+
+          </button>
+
+          <p class="checkout-message">
+            Verifica las cantidades antes de continuar.
+          </p>
+
+        </mat-card>
+
+      </aside>
+
+    </div>
+
+  }
+
+</section>

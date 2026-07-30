@@ -1,0 +1,79 @@
+<mat-nav-list class="sidebar">
+
+  <a
+    mat-list-item
+    routerLink="/dashboard"
+    routerLinkActive="active-link">
+
+    <mat-icon matListItemIcon>
+      dashboard
+    </mat-icon>
+
+    <span matListItemTitle>
+      Dashboard
+    </span>
+
+  </a>
+
+  <a
+    mat-list-item
+    routerLink="/products"
+    routerLinkActive="active-link">
+
+    <mat-icon matListItemIcon>
+      inventory_2
+    </mat-icon>
+
+    <span matListItemTitle>
+      Productos
+    </span>
+
+  </a>
+
+  <a
+    *ngIf="authService.isAdmin()"
+    mat-list-item
+    routerLink="/admin/products"
+    routerLinkActive="active-link">
+
+    <mat-icon matListItemIcon>
+      admin_panel_settings
+    </mat-icon>
+
+    <span matListItemTitle>
+      Administración
+    </span>
+
+  </a>
+
+  <a
+    mat-list-item
+    routerLink="/cart"
+    routerLinkActive="active-link">
+
+    <mat-icon matListItemIcon>
+      shopping_cart
+    </mat-icon>
+
+    <span matListItemTitle>
+      Carrito
+    </span>
+
+  </a>
+
+  <a
+    mat-list-item
+    routerLink="/sales"
+    routerLinkActive="active-link">
+
+    <mat-icon matListItemIcon>
+      receipt_long
+    </mat-icon>
+
+    <span matListItemTitle>
+      Ventas
+    </span>
+
+  </a>
+
+</mat-nav-list>

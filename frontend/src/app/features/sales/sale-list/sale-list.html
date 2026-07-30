@@ -1,0 +1,319 @@
+<section class="sales-page">
+
+  <header class="sales-header">
+
+    <div>
+      <span class="page-label">
+        Historial
+      </span>
+
+      <h1>Mis compras</h1>
+
+      <p>
+        Consulta tus compras anteriores y revisa
+        el detalle de cada pedido.
+      </p>
+    </div>
+
+    <button
+      mat-stroked-button
+      type="button"
+      class="refresh-button"
+      [disabled]="loading"
+      (click)="loadSales()">
+
+      <mat-icon>refresh</mat-icon>
+
+      <span>Actualizar</span>
+
+    </button>
+
+  </header>
+
+  @if (loading) {
+
+    <div class="state-card">
+
+      <mat-spinner diameter="45"></mat-spinner>
+
+      <p>Cargando historial de compras...</p>
+
+    </div>
+
+  } @else if (errorMessage) {
+
+    <div class="state-card error-state">
+
+      <mat-icon>error_outline</mat-icon>
+
+      <h2>No pudimos cargar tus compras</h2>
+
+      <p>{{ errorMessage }}</p>
+
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="loadSales()">
+
+        <mat-icon>refresh</mat-icon>
+
+        <span>Intentar nuevamente</span>
+
+      </button>
+
+    </div>
+
+  } @else if (sales.length === 0) {
+
+    <div class="state-card empty-state">
+
+      <mat-icon>receipt_long</mat-icon>
+
+      <h2>Aún no tienes compras</h2>
+
+      <p>
+        Cuando finalices una compra, aparecerá
+        en esta sección.
+      </p>
+
+    </div>
+
+  } @else {
+
+    <div class="sales-summary">
+
+      <mat-card class="summary-stat">
+
+        <div class="stat-icon">
+          <mat-icon>shopping_bag</mat-icon>
+        </div>
+
+        <div>
+          <span>Compras realizadas</span>
+          <strong>{{ sales.length }}</strong>
+        </div>
+
+      </mat-card>
+
+      <mat-card class="summary-stat">
+
+        <div class="stat-icon">
+          <mat-icon>inventory_2</mat-icon>
+        </div>
+
+        <div>
+          <span>Productos adquiridos</span>
+          <strong>{{ getTotalUnits() }}</strong>
+        </div>
+
+      </mat-card>
+
+      <mat-card class="summary-stat">
+
+        <div class="stat-icon">
+          <mat-icon>payments</mat-icon>
+        </div>
+
+        <div>
+          <span>Total gastado</span>
+
+          <strong>
+            {{
+              getTotalSpent()
+                | currency:'USD':'symbol':'1.2-2':'es-ES'
+            }}
+          </strong>
+        </div>
+
+      </mat-card>
+
+    </div>
+
+    <div class="sales-list">
+
+      @for (
+        sale of sales;
+        track sale.id
+      ) {
+
+        <mat-expansion-panel class="sale-panel">
+
+          <mat-expansion-panel-header>
+
+            <mat-panel-title>
+
+              <div class="sale-title">
+
+                <div class="sale-number-icon">
+                  <mat-icon>receipt</mat-icon>
+                </div>
+
+                <div>
+                  <span class="sale-label">
+                    Compra
+                  </span>
+
+                  <strong>
+                    {{ getSaleNumber(sale.id) }}
+                  </strong>
+                </div>
+
+              </div>
+
+            </mat-panel-title>
+
+            <mat-panel-description>
+
+              <div class="sale-header-data">
+
+                <div class="header-detail">
+                  <span>Fecha</span>
+
+                  <strong>
+                    {{
+                      sale.createdAt
+                        | date:'dd/MM/yyyy HH:mm'
+                    }}
+                  </strong>
+                </div>
+
+                <div class="header-detail">
+                  <span>Productos</span>
+
+                  <strong>
+                    {{
+                      getProductsLabel(
+                        sale.totalItems
+                      )
+                    }}
+                  </strong>
+                </div>
+
+                <div class="header-detail sale-total">
+                  <span>Total</span>
+
+                  <strong>
+                    {{
+                      sale.total
+                        | currency:'USD':'symbol':'1.2-2':'es-ES'
+                    }}
+                  </strong>
+                </div>
+
+              </div>
+
+            </mat-panel-description>
+
+          </mat-expansion-panel-header>
+
+          <div class="sale-content">
+
+            <div class="detail-header">
+
+              <div>
+                <span class="detail-label">
+                  Detalle del pedido
+                </span>
+
+                <h2>
+                  Productos comprados
+                </h2>
+              </div>
+
+              <span class="completed-badge">
+                <mat-icon>check_circle</mat-icon>
+                Completada
+              </span>
+
+            </div>
+
+            <div class="detail-list">
+
+              @for (
+                detail of sale.details;
+                track detail.productId
+              ) {
+
+                <div class="detail-item">
+
+                  <div class="product-icon">
+                    <mat-icon>inventory_2</mat-icon>
+                  </div>
+
+                  <div class="product-info">
+
+                    <strong>
+                      {{ detail.productName }}
+                    </strong>
+
+                    <span>
+                      Precio unitario:
+                      {{
+                        detail.price
+                          | currency:'USD':'symbol':'1.2-2':'es-ES'
+                      }}
+                    </span>
+
+                  </div>
+
+                  <div class="quantity-data">
+
+                    <span>Cantidad</span>
+                    <strong>{{ detail.quantity }}</strong>
+
+                  </div>
+
+                  <div class="subtotal-data">
+
+                    <span>Subtotal</span>
+
+                    <strong>
+                      {{
+                        getDetailSubtotal(
+                          detail.price,
+                          detail.quantity
+                        )
+                          | currency:'USD':'symbol':'1.2-2':'es-ES'
+                      }}
+                    </strong>
+
+                  </div>
+
+                </div>
+
+              }
+
+            </div>
+
+            <div class="sale-footer">
+
+              <div>
+                <span>Total de unidades</span>
+                <strong>{{ sale.totalItems }}</strong>
+              </div>
+
+              <div class="footer-total">
+                <span>Total pagado</span>
+
+                <strong>
+                  {{
+                    sale.total
+                      | currency:'USD':'symbol':'1.2-2':'es-ES'
+                  }}
+                </strong>
+              </div>
+
+            </div>
+
+          </div>
+
+        </mat-expansion-panel>
+
+      }
+
+    </div>
+
+  }
+
+</section>

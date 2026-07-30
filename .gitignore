@@ -1,0 +1,36 @@
+# ==========================
+# Variables de entorno
+# ==========================
+.env
+.env.*
+
+# ==========================
+# Java / Spring Boot
+# ==========================
+target/
+*.class
+*.log
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# ==========================
+# Angular
+# ==========================
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+
+# ==========================
+# IDEs
+# ==========================
+.vscode/
+.idea/
+*.iml
+
+# ==========================
+# Sistema
+# ==========================
+.DS_Store
+Thumbs.db

@@ -1,0 +1,364 @@
+<section class="products-page">
+
+  <header class="products-header">
+
+    <div>
+      <span class="page-label">
+        Catálogo
+      </span>
+
+      <h1>Productos</h1>
+
+      <p>
+        Explora los productos disponibles y agrégalos
+        a tu carrito.
+      </p>
+    </div>
+
+    <div class="products-counter">
+      <mat-icon>inventory_2</mat-icon>
+
+      <div>
+        <strong>{{ filteredProducts.length }}</strong>
+
+        <span>
+          {{
+            filteredProducts.length === 1
+              ? 'producto'
+              : 'productos'
+          }}
+        </span>
+      </div>
+    </div>
+
+  </header>
+
+  @if (!loading && !errorMessage && products.length > 0) {
+
+    <mat-card class="filters-card">
+
+      <div class="filters-grid">
+
+        <mat-form-field
+          appearance="outline"
+          class="search-field">
+
+          <mat-label>Buscar producto</mat-label>
+
+          <mat-icon matPrefix>
+            search
+          </mat-icon>
+
+          <input
+            matInput
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="Ejemplo: teclado">
+
+          @if (searchTerm) {
+
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              aria-label="Limpiar búsqueda"
+              (click)="searchTerm = ''">
+
+              <mat-icon>close</mat-icon>
+
+            </button>
+
+          }
+
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+
+          <mat-label>Disponibilidad</mat-label>
+
+          <mat-select [(ngModel)]="stockFilter">
+
+            <mat-option value="all">
+              Todos
+            </mat-option>
+
+            <mat-option value="available">
+              Con stock
+            </mat-option>
+
+            <mat-option value="low">
+              Poco stock
+            </mat-option>
+
+            <mat-option value="out">
+              Agotados
+            </mat-option>
+
+          </mat-select>
+
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+
+          <mat-label>Ordenar por</mat-label>
+
+          <mat-select [(ngModel)]="sortOption">
+
+            <mat-option value="name-asc">
+              Nombre: A–Z
+            </mat-option>
+
+            <mat-option value="name-desc">
+              Nombre: Z–A
+            </mat-option>
+
+            <mat-option value="price-asc">
+              Precio: menor a mayor
+            </mat-option>
+
+            <mat-option value="price-desc">
+              Precio: mayor a menor
+            </mat-option>
+
+            <mat-option value="stock-asc">
+              Stock: menor a mayor
+            </mat-option>
+
+            <mat-option value="stock-desc">
+              Stock: mayor a menor
+            </mat-option>
+
+          </mat-select>
+
+        </mat-form-field>
+
+        <button
+          mat-stroked-button
+          type="button"
+          class="clear-filters-button"
+          (click)="clearFilters()">
+
+          <mat-icon>filter_alt_off</mat-icon>
+          <span>Limpiar</span>
+
+        </button>
+
+      </div>
+
+    </mat-card>
+
+  }
+
+  @if (loading) {
+
+    <div class="loading-state">
+      <mat-spinner diameter="45"></mat-spinner>
+      <p>Cargando productos...</p>
+    </div>
+
+  } @else if (errorMessage) {
+
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+
+      <h2>No pudimos cargar los productos</h2>
+
+      <p>{{ errorMessage }}</p>
+
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="loadProducts()">
+
+        <mat-icon>refresh</mat-icon>
+        <span>Intentar nuevamente</span>
+
+      </button>
+    </div>
+
+  } @else if (products.length === 0) {
+
+    <div class="empty-state">
+      <mat-icon>inventory_2</mat-icon>
+
+      <h2>No hay productos disponibles</h2>
+
+      <p>
+        Los productos aparecerán aquí cuando sean
+        registrados.
+      </p>
+    </div>
+
+  } @else if (filteredProducts.length === 0) {
+
+    <div class="empty-state">
+
+      <mat-icon>search_off</mat-icon>
+
+      <h2>No encontramos productos</h2>
+
+      <p>
+        Prueba con otro nombre o cambia los filtros
+        seleccionados.
+      </p>
+
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="clearFilters()">
+
+        <mat-icon>filter_alt_off</mat-icon>
+        <span>Limpiar filtros</span>
+
+      </button>
+
+    </div>
+
+  } @else {
+
+    <div class="products-grid">
+
+      @for (
+        product of filteredProducts;
+        track product.id
+      ) {
+
+        <mat-card class="product-card">
+
+          <div class="product-image">
+            <mat-icon>inventory_2</mat-icon>
+          </div>
+
+          <mat-card-content>
+
+            <div class="product-title-row">
+
+              <h2>{{ product.name }}</h2>
+
+              <span
+                class="stock-badge"
+                [class.out-of-stock]="product.stock <= 0"
+                [class.low-stock]="
+                  product.stock > 0 &&
+                  product.stock <= 5
+                ">
+
+                @if (product.stock <= 0) {
+                  Sin stock
+                } @else {
+                  Stock: {{ product.stock }}
+                }
+
+              </span>
+
+            </div>
+
+            <div class="product-price">
+              {{ product.price | currency:'USD' }}
+            </div>
+
+            @if (product.stock > 0) {
+
+              <div class="quantity-section">
+
+                <span class="quantity-label">
+                  Cantidad
+                </span>
+
+                <div class="quantity-control">
+
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Disminuir cantidad"
+                    [disabled]="
+                      getQuantity(product) <= 1 ||
+                      addingProductId === product.id
+                    "
+                    (click)="decreaseQuantity(product)">
+
+                    <mat-icon>remove</mat-icon>
+
+                  </button>
+
+                  <span class="quantity-value">
+                    {{ getQuantity(product) }}
+                  </span>
+
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Aumentar cantidad"
+                    [disabled]="
+                      getQuantity(product) >= product.stock ||
+                      addingProductId === product.id
+                    "
+                    (click)="increaseQuantity(product)">
+
+                    <mat-icon>add</mat-icon>
+
+                  </button>
+
+                </div>
+
+                <span class="quantity-subtotal">
+                  Subtotal:
+                  {{
+                    product.price * getQuantity(product)
+                      | currency:'USD'
+                  }}
+                </span>
+
+              </div>
+
+            }
+
+          </mat-card-content>
+
+          <mat-card-actions>
+
+            <button
+              mat-raised-button
+              color="primary"
+              class="add-button"
+              [disabled]="
+                product.stock <= 0 ||
+                addingProductId === product.id
+              "
+              (click)="addToCart(product)">
+
+              <mat-icon>
+                {{
+                  addingProductId === product.id
+                    ? 'hourglass_top'
+                    : 'add_shopping_cart'
+                }}
+              </mat-icon>
+
+              <span>
+                {{
+                  addingProductId === product.id
+                    ? 'Agregando...'
+                    : product.stock <= 0
+                      ? 'Sin stock'
+                      : getQuantity(product) === 1
+                        ? 'Agregar al carrito'
+                        : 'Agregar ' +
+                          getQuantity(product) +
+                          ' unidades'
+                }}
+              </span>
+
+            </button>
+
+          </mat-card-actions>
+
+        </mat-card>
+
+      }
+
+    </div>
+
+  }
+
+</section>

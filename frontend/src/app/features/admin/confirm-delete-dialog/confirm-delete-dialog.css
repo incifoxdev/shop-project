@@ -1,0 +1,15 @@
+mat-dialog-content{
+    min-width:320px;
+}
+
+.warning-text{
+    margin-top:16px;
+    color:#d32f2f;
+    font-weight:500;
+}
+
+h2{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
