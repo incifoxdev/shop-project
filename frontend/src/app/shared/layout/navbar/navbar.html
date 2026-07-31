@@ -7,13 +7,16 @@
   <span class="spacer"></span>
 
   <span class="user">
+    @if (name) {
+      <strong>{{ name }}</strong>
+    }
 
-    {{ email }}
-
+   
   </span>
 
   <button
     mat-button
+    type="button"
     (click)="logout()">
 
     Cerrar sesión

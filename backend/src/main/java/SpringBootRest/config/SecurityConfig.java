@@ -68,68 +68,76 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Login y registro
-                        .requestMatchers("/auth/**")
-                        .permitAll()
+        // Login y registro
+        .requestMatchers("/auth/**")
+        .permitAll()
 
-                        // Swagger
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**"
-                        )
-                        .permitAll()
+        // Swagger
+        .requestMatchers(
+                "/swagger-ui/**",
+                "/swagger-ui.html",
+                "/v3/api-docs/**"
+        )
+        .permitAll()
 
-                        // Imágenes
-                        .requestMatchers("/uploads/**")
-                        .permitAll()
+        // Imágenes
+        .requestMatchers("/uploads/**")
+        .permitAll()
 
-                        // Consultar productos: usuario autenticado
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/products",
-                                "/products/**"
-                        )
-                        .authenticated()
+        // Datos del usuario autenticado
+        .requestMatchers(HttpMethod.GET, "/users/me")
+        .authenticated()
 
-                        // Administrar productos
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/products",
-                                "/products/**"
-                        )
-                        .hasRole("ADMIN")
+        // Gestión administrativa de usuarios
+        .requestMatchers("/users/**")
+        .hasRole("ADMIN")
 
-                        .requestMatchers(
-                                HttpMethod.PUT,
-                                "/products/**"
-                        )
-                        .hasRole("ADMIN")
+        // Consultar productos
+        .requestMatchers(
+                HttpMethod.GET,
+                "/products",
+                "/products/**"
+        )
+        .authenticated()
 
-                        .requestMatchers(
-                                HttpMethod.PATCH,
-                                "/products/**"
-                        )
-                        .hasRole("ADMIN")
+        // Administrar productos
+        .requestMatchers(
+                HttpMethod.POST,
+                "/products",
+                "/products/**"
+        )
+        .hasRole("ADMIN")
 
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/products/**"
-                        )
-                        .hasRole("ADMIN")
-// Otros endpoints administrativos
-.requestMatchers("/admin/**")
-.hasRole("ADMIN")
+        .requestMatchers(
+                HttpMethod.PUT,
+                "/products/**"
+        )
+        .hasRole("ADMIN")
 
-// Dashboard administrativo
-.requestMatchers("/dashboard/**")
-.hasRole("ADMIN")
+        .requestMatchers(
+                HttpMethod.PATCH,
+                "/products/**"
+        )
+        .hasRole("ADMIN")
 
-// Todo lo demás requiere JWT
-.anyRequest()
-.authenticated()
-                )
+        .requestMatchers(
+                HttpMethod.DELETE,
+                "/products/**"
+        )
+        .hasRole("ADMIN")
 
+        // Otros endpoints administrativos
+        .requestMatchers("/admin/**")
+        .hasRole("ADMIN")
+
+        // Dashboard administrativo
+        .requestMatchers("/dashboard/**")
+        .hasRole("ADMIN")
+
+        // Todo lo demás requiere JWT
+        .anyRequest()
+        .authenticated()
+)
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class

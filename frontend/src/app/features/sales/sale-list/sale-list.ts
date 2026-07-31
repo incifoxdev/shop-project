@@ -5,7 +5,6 @@ import {
 } from '@angular/core';
 
 import {
-  CommonModule,
   CurrencyPipe,
   DatePipe
 } from '@angular/common';
@@ -14,15 +13,14 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
-
-import {
-  MatProgressSpinnerModule
-} from '@angular/material/progress-spinner';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import {
   MatSnackBar,
   MatSnackBarModule
 } from '@angular/material/snack-bar';
+
+import { Observable, finalize } from 'rxjs';
 
 import { Auth } from '../../../core/services/auth';
 import { SaleService } from '../../../core/services/sale';
@@ -32,7 +30,6 @@ import { Sale } from '../../../core/models/sale';
   selector: 'app-sale-list',
   standalone: true,
   imports: [
-    CommonModule,
     CurrencyPipe,
     DatePipe,
     MatCardModule,
@@ -48,72 +45,76 @@ import { Sale } from '../../../core/models/sale';
 export class SaleList implements OnInit {
 
   sales: Sale[] = [];
-  userId: string | null = null;
 
   loading = true;
   errorMessage = '';
 
   constructor(
-    private saleService: SaleService,
-    private auth: Auth,
-    private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef
+    private readonly saleService: SaleService,
+    public readonly auth: Auth,
+    private readonly snackBar: MatSnackBar,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.userId = this.auth.getUserId();
-
-    if (!this.userId) {
-      this.loading = false;
-      this.errorMessage =
-        'No hay un usuario autenticado.';
-
-      this.snackBar.open(
-        this.errorMessage,
-        'Cerrar',
-        {
-          duration: 3000
-        }
-      );
-
-      this.cdr.markForCheck();
-      return;
-    }
-
     this.loadSales();
   }
 
-  loadSales(): void {
-    if (!this.userId) {
-      return;
-    }
+ loadSales(): void {
+  const userId = this.auth.getUserId();
 
-    this.loading = true;
-    this.errorMessage = '';
+  if (!userId) {
+    this.handleMissingUser();
+    return;
+  }
 
-    this.saleService
-      .getSales(this.userId)
-      .subscribe({
-        next: data => {
-         this.sales = data;
+  this.loading = true;
+  this.errorMessage = '';
 
-          this.loading = false;
-          this.cdr.markForCheck();
-        },
+  this.saleService
+    .getSales(userId)
+    .pipe(
+      finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe({
+      next: sales => {
+        this.sales = sales;
+      },
 
-        error: error => {
-          console.error(
-            'Error cargando ventas:',
-            error
-          );
+      error: error => {
+        console.error(
+          'Error cargando ventas:',
+          error
+        );
 
-          this.errorMessage =
-            'No se pudo cargar el historial de compras.';
+        this.sales = [];
+        this.errorMessage =
+          'No se pudo cargar el historial de compras.';
 
-          this.loading = false;
-          this.cdr.markForCheck();
-        }
-      });
+        this.snackBar.open(
+          this.errorMessage,
+          'Cerrar',
+          {
+            duration: 3000
+          }
+        );
+      }
+    });
+}
+
+  get pageTitle(): string {
+    return this.auth.isAdmin()
+      ? 'Ventas'
+      : 'Mis compras';
+  }
+
+  get emptyMessage(): string {
+    return this.auth.isAdmin()
+      ? 'Todavía no se han registrado ventas.'
+      : 'Todavía no has realizado compras.';
   }
 
   getSaleNumber(id: number): string {
@@ -145,5 +146,22 @@ export class SaleList implements OnInit {
     return totalItems === 1
       ? '1 producto'
       : `${totalItems} productos`;
+  }
+
+  private handleMissingUser(): void {
+    this.sales = [];
+    this.loading = false;
+    this.errorMessage =
+      'No hay un usuario autenticado.';
+
+    this.snackBar.open(
+      this.errorMessage,
+      'Cerrar',
+      {
+        duration: 3000
+      }
+    );
+
+    this.cdr.markForCheck();
   }
 }

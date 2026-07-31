@@ -1,6 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import {
+  RouterLink,
+  RouterLinkActive
+} from '@angular/router';
 
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
@@ -11,7 +13,6 @@ import { Auth } from '../../../core/services/auth';
   selector: 'app-sidebar',
   standalone: true,
   imports: [
-    CommonModule,
     RouterLink,
     RouterLinkActive,
     MatIconModule,
@@ -23,7 +24,7 @@ import { Auth } from '../../../core/services/auth';
 export class Sidebar {
 
   constructor(
-    public authService: Auth
+    public readonly auth: Auth
   ) {}
 
 }

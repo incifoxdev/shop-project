@@ -1,9 +1,11 @@
 import { Routes } from '@angular/router';
+
 import { MainLayout } from './shared/layout/main-layout/main-layout';
+
 import { authGuard } from './core/guards/auth-guard';
+import { adminGuard } from './core/guards/admin-guard';
 
 export const routes: Routes = [
-
   {
     path: 'login',
     loadComponent: () =>
@@ -15,10 +17,17 @@ export const routes: Routes = [
     path: '',
     component: MainLayout,
     canActivate: [authGuard],
+
     children: [
+      {
+        path: '',
+        redirectTo: 'products',
+        pathMatch: 'full'
+      },
 
       {
         path: 'dashboard',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/dashboard/dashboard')
             .then(m => m.Dashboard)
@@ -31,12 +40,21 @@ export const routes: Routes = [
             .then(m => m.ProductList)
       },
 
-     {
-  path: 'admin/products',
-  loadComponent: () =>
-    import('./features/admin/products/admin-products')
-      .then(m => m.AdminProducts)
-},
+      {
+        path: 'admin/products',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/products/admin-products')
+            .then(m => m.AdminProducts)
+      },
+
+      {
+        path: 'admin/users',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/users/admin-users/admin-users')
+            .then(m => m.AdminUsers)
+      },
 
       {
         path: 'cart',
@@ -58,19 +76,11 @@ export const routes: Routes = [
           import('./features/sales/sale-list/sale-list')
             .then(m => m.SaleList)
       }
-
     ]
   },
 
   {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full'
-  },
-
-  {
     path: '**',
-    redirectTo: 'login'
+    redirectTo: ''
   }
-
 ];
