@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Getter
 @Setter
@@ -26,5 +28,6 @@ public class SaleDetail {
 
     private int quantity;
 
-    private double price;
+    @Column(precision = 19, scale = 2)
+    private BigDecimal price;
 }

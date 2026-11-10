@@ -4,13 +4,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
+import java.math.BigDecimal;
+
 public class ProductRequestDTO {
 
     @NotBlank(message = "Product name is required")
     private String name;
 
     @Positive(message = "Price must be greater than zero")
-    private double price;
+    private BigDecimal price;
 
     @PositiveOrZero(message = "Stock cannot be negative")
     private int stock;
@@ -23,11 +25,11 @@ public class ProductRequestDTO {
         this.name = name;
     }
 
-    public double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 

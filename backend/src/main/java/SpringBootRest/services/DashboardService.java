@@ -11,6 +11,7 @@ import SpringBootRest.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.TextStyle;
@@ -40,7 +41,7 @@ public class DashboardService {
         long totalSales =
                 saleRepository.count();
 
-        double totalRevenue =
+        BigDecimal totalRevenue =
                 saleRepository.sumTotalRevenue();
 
         List<MonthlySalesDTO> salesPerMonth =
@@ -78,15 +79,17 @@ public class DashboardService {
                                 startDate
                         );
 
-        Map<YearMonth, Double> totalsByMonth =
+        Map<YearMonth, BigDecimal> totalsByMonth =
                 sales.stream()
                         .collect(
                                 Collectors.groupingBy(
                                         sale -> YearMonth.from(
                                                 sale.getCreatedAt()
                                         ),
-                                        Collectors.summingDouble(
-                                                Sale::getTotal
+                                        Collectors.reducing(
+                                                BigDecimal.ZERO,
+                                                Sale::getTotal,
+                                                BigDecimal::add
                                         )
                                 )
                         );
@@ -115,10 +118,10 @@ public class DashboardService {
                             + " "
                             + month.getYear();
 
-            double total =
+            BigDecimal total =
                     totalsByMonth.getOrDefault(
                             month,
-                            0.0
+                            BigDecimal.ZERO
                     );
 
             result.add(

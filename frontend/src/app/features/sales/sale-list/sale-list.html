@@ -7,11 +7,18 @@
         Historial
       </span>
 
-      <h1>Mis compras</h1>
+      <h1>
+        {{ pageTitle }}
+      </h1>
 
       <p>
-        Consulta tus compras anteriores y revisa
-        el detalle de cada pedido.
+        @if (auth.isAdmin()) {
+          Consulta todas las ventas realizadas y revisa
+          el comprador y el detalle de cada pedido.
+        } @else {
+          Consulta tus compras anteriores y revisa
+          el detalle de cada pedido.
+        }
       </p>
     </div>
 
@@ -36,7 +43,13 @@
 
       <mat-spinner diameter="45"></mat-spinner>
 
-      <p>Cargando historial de compras...</p>
+      <p>
+        {{
+          auth.isAdmin()
+            ? 'Cargando ventas...'
+            : 'Cargando historial de compras...'
+        }}
+      </p>
 
     </div>
 
@@ -46,7 +59,13 @@
 
       <mat-icon>error_outline</mat-icon>
 
-      <h2>No pudimos cargar tus compras</h2>
+      <h2>
+        {{
+          auth.isAdmin()
+            ? 'No pudimos cargar las ventas'
+            : 'No pudimos cargar tus compras'
+        }}
+      </h2>
 
       <p>{{ errorMessage }}</p>
 
@@ -70,11 +89,18 @@
 
       <mat-icon>receipt_long</mat-icon>
 
-      <h2>Aún no tienes compras</h2>
+      <h2>
+        {{ emptyMessage }}
+      </h2>
 
       <p>
-        Cuando finalices una compra, aparecerá
-        en esta sección.
+        @if (auth.isAdmin()) {
+          Las ventas aparecerán aquí cuando los usuarios
+          completen sus compras.
+        } @else {
+          Cuando finalices una compra, aparecerá
+          en esta sección.
+        }
       </p>
 
     </div>
@@ -90,7 +116,14 @@
         </div>
 
         <div>
-          <span>Compras realizadas</span>
+          <span>
+            {{
+              auth.isAdmin()
+                ? 'Ventas realizadas'
+                : 'Compras realizadas'
+            }}
+          </span>
+
           <strong>{{ sales.length }}</strong>
         </div>
 
@@ -103,7 +136,14 @@
         </div>
 
         <div>
-          <span>Productos adquiridos</span>
+          <span>
+            {{
+              auth.isAdmin()
+                ? 'Productos vendidos'
+                : 'Productos adquiridos'
+            }}
+          </span>
+
           <strong>{{ getTotalUnits() }}</strong>
         </div>
 
@@ -116,12 +156,18 @@
         </div>
 
         <div>
-          <span>Total gastado</span>
+          <span>
+            {{
+              auth.isAdmin()
+                ? 'Ingresos totales'
+                : 'Total gastado'
+            }}
+          </span>
 
           <strong>
             {{
               getTotalSpent()
-                | currency:'USD':'symbol':'1.2-2':'es-ES'
+                | currency:'CLP':'symbol':'1.0-0':'es-CL'
             }}
           </strong>
         </div>
@@ -151,7 +197,11 @@
 
                 <div>
                   <span class="sale-label">
-                    Compra
+                    {{
+                      auth.isAdmin()
+                        ? 'Venta'
+                        : 'Compra'
+                    }}
                   </span>
 
                   <strong>
@@ -167,7 +217,26 @@
 
               <div class="sale-header-data">
 
+                @if (auth.isAdmin()) {
+
+                  <div class="header-detail buyer-detail">
+
+                    <span>Comprador</span>
+
+                    <strong>
+                      {{ sale.userName }}
+                    </strong>
+
+                    <small>
+                      {{ sale.userEmail }}
+                    </small>
+
+                  </div>
+
+                }
+
                 <div class="header-detail">
+
                   <span>Fecha</span>
 
                   <strong>
@@ -176,9 +245,11 @@
                         | date:'dd/MM/yyyy HH:mm'
                     }}
                   </strong>
+
                 </div>
 
                 <div class="header-detail">
+
                   <span>Productos</span>
 
                   <strong>
@@ -188,17 +259,20 @@
                       )
                     }}
                   </strong>
+
                 </div>
 
                 <div class="header-detail sale-total">
+
                   <span>Total</span>
 
                   <strong>
                     {{
                       sale.total
-                        | currency:'USD':'symbol':'1.2-2':'es-ES'
+                        | currency:'CLP':'symbol':'1.0-0':'es-CL'
                     }}
                   </strong>
+
                 </div>
 
               </div>
@@ -212,6 +286,7 @@
             <div class="detail-header">
 
               <div>
+
                 <span class="detail-label">
                   Detalle del pedido
                 </span>
@@ -219,11 +294,43 @@
                 <h2>
                   Productos comprados
                 </h2>
+
+                @if (auth.isAdmin()) {
+
+                  <div class="buyer-card">
+
+                    <mat-icon>
+                      person
+                    </mat-icon>
+
+                    <div>
+
+                      <span>
+                        Compra realizada por
+                      </span>
+
+                      <strong>
+                        {{ sale.userName }}
+                      </strong>
+
+                      <small>
+                        {{ sale.userEmail }}
+                      </small>
+
+                    </div>
+
+                  </div>
+
+                }
+
               </div>
 
               <span class="completed-badge">
+
                 <mat-icon>check_circle</mat-icon>
+
                 Completada
+
               </span>
 
             </div>
@@ -251,7 +358,7 @@
                       Precio unitario:
                       {{
                         detail.price
-                          | currency:'USD':'symbol':'1.2-2':'es-ES'
+                          | currency:'CLP':'symbol':'1.0-0':'es-CL'
                       }}
                     </span>
 
@@ -260,7 +367,10 @@
                   <div class="quantity-data">
 
                     <span>Cantidad</span>
-                    <strong>{{ detail.quantity }}</strong>
+
+                    <strong>
+                      {{ detail.quantity }}
+                    </strong>
 
                   </div>
 
@@ -274,7 +384,7 @@
                           detail.price,
                           detail.quantity
                         )
-                          | currency:'USD':'symbol':'1.2-2':'es-ES'
+                          | currency:'CLP':'symbol':'1.0-0':'es-CL'
                       }}
                     </strong>
 
@@ -289,19 +399,32 @@
             <div class="sale-footer">
 
               <div>
+
                 <span>Total de unidades</span>
-                <strong>{{ sale.totalItems }}</strong>
+
+                <strong>
+                  {{ sale.totalItems }}
+                </strong>
+
               </div>
 
               <div class="footer-total">
-                <span>Total pagado</span>
+
+                <span>
+                  {{
+                    auth.isAdmin()
+                      ? 'Total de la venta'
+                      : 'Total pagado'
+                  }}
+                </span>
 
                 <strong>
                   {{
                     sale.total
-                      | currency:'USD':'symbol':'1.2-2':'es-ES'
+                      | currency:'CLP':'symbol':'1.0-0':'es-CL'
                   }}
                 </strong>
+
               </div>
 
             </div>

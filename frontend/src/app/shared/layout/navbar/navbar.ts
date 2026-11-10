@@ -19,22 +19,21 @@ import { Auth } from '../../../core/services/auth';
 export class Navbar {
 
   constructor(
-    private auth: Auth,
-    private router: Router
+    public readonly auth: Auth,
+    private readonly router: Router
   ) {}
 
+  get name(): string {
+    return this.auth.currentUser()?.name ?? '';
+  }
+
   get email(): string {
-
-    return this.auth.getEmail() ?? '';
-
+    return this.auth.currentUser()?.email ?? '';
   }
 
   logout(): void {
-
     this.auth.logout();
-
     this.router.navigate(['/login']);
-
   }
 
 }

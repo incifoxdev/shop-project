@@ -2,6 +2,7 @@ package SpringBootRest.dto;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -13,9 +14,13 @@ public class SaleDTO {
 
     private UUID userId;
 
+    private String userName;
+
+    private String userEmail;
+
     private LocalDateTime createdAt;
 
-    private double total;
+    private BigDecimal total;
 
     private int totalItems;
 

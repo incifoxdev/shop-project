@@ -103,11 +103,11 @@ export class ProductList implements OnInit {
   sortOption: SortOption = 'name-asc';
 
   constructor(
-    private productService: ProductService,
-    private cartService: CartService,
-    private auth: Auth,
-    private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef
+    private readonly productService: ProductService,
+    private readonly cartService: CartService,
+    private readonly auth: Auth,
+    private readonly snackBar: MatSnackBar,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -121,12 +121,7 @@ export class ProductList implements OnInit {
     this.productService
       .getProducts()
       .subscribe({
-        next: data => {
-          console.log(
-            'Productos recibidos:',
-            data
-          );
-
+        next: (data: Product[]) => {
           this.products = data;
           this.loading = false;
 
@@ -157,60 +152,70 @@ export class ProductList implements OnInit {
       .toLowerCase();
 
     const filteredProducts =
-      this.products.filter(product => {
-        const productName =
-          product.name.toLowerCase();
+      this.products.filter(
+        (product: Product) => {
+          const productName =
+            product.name.toLowerCase();
 
-        const matchesSearch =
-          search === '' ||
-          productName.includes(search);
+          const matchesSearch =
+            search === '' ||
+            productName.includes(search);
 
-        const matchesStock =
-          this.matchesStockFilter(product);
+          const matchesStock =
+            this.matchesStockFilter(product);
 
-        return matchesSearch && matchesStock;
-      });
+          return (
+            matchesSearch &&
+            matchesStock
+          );
+        }
+      );
 
     return [...filteredProducts]
-      .sort((firstProduct, secondProduct) => {
-        switch (this.sortOption) {
+      .sort(
+        (
+          firstProduct: Product,
+          secondProduct: Product
+        ) => {
+          switch (this.sortOption) {
 
-          case 'name-desc':
-            return secondProduct.name.localeCompare(
-              firstProduct.name
-            );
+            case 'name-desc':
+              return secondProduct.name.localeCompare(
+                firstProduct.name
+              );
 
-          case 'price-asc':
-            return (
-              firstProduct.price -
-              secondProduct.price
-            );
+            case 'price-asc':
+              return (
+                firstProduct.price -
+                secondProduct.price
+              );
 
-          case 'price-desc':
-            return (
-              secondProduct.price -
-              firstProduct.price
-            );
+            case 'price-desc':
+              return (
+                secondProduct.price -
+                firstProduct.price
+              );
 
-          case 'stock-asc':
-            return (
-              firstProduct.stock -
-              secondProduct.stock
-            );
+            case 'stock-asc':
+              return (
+                firstProduct.stock -
+                secondProduct.stock
+              );
 
-          case 'stock-desc':
-            return (
-              secondProduct.stock -
-              firstProduct.stock
-            );
+            case 'stock-desc':
+              return (
+                secondProduct.stock -
+                firstProduct.stock
+              );
 
-          case 'name-asc':
-          default:
-            return firstProduct.name.localeCompare(
-              secondProduct.name
-            );
+            case 'name-asc':
+            default:
+              return firstProduct.name.localeCompare(
+                secondProduct.name
+              );
+          }
         }
-      });
+      );
   }
 
   private matchesStockFilter(
@@ -241,7 +246,8 @@ export class ProductList implements OnInit {
   ): void {
     for (const product of products) {
       if (
-        this.quantities[product.id] === undefined
+        this.quantities[product.id] ===
+        undefined
       ) {
         this.quantities[product.id] = 1;
       }
@@ -254,11 +260,17 @@ export class ProductList implements OnInit {
     this.sortOption = 'name-asc';
   }
 
-  getQuantity(product: Product): number {
-    return this.quantities[product.id] ?? 1;
+  getQuantity(
+    product: Product
+  ): number {
+    return (
+      this.quantities[product.id] ?? 1
+    );
   }
 
-  increaseQuantity(product: Product): void {
+  increaseQuantity(
+    product: Product
+  ): void {
     const currentQuantity =
       this.getQuantity(product);
 
@@ -266,7 +278,10 @@ export class ProductList implements OnInit {
       return;
     }
 
-    if (currentQuantity < product.stock) {
+    if (
+      currentQuantity <
+      product.stock
+    ) {
       this.quantities[product.id] =
         currentQuantity + 1;
 
@@ -283,7 +298,9 @@ export class ProductList implements OnInit {
     );
   }
 
-  decreaseQuantity(product: Product): void {
+  decreaseQuantity(
+    product: Product
+  ): void {
     const currentQuantity =
       this.getQuantity(product);
 
@@ -295,10 +312,10 @@ export class ProductList implements OnInit {
     }
   }
 
-  addToCart(product: Product): void {
-    const userId = this.auth.getUserId();
-
-    if (!userId) {
+  addToCart(
+    product: Product
+  ): void {
+    if (!this.auth.isLoggedIn()) {
       this.snackBar.open(
         'No hay un usuario autenticado.',
         'Cerrar',
@@ -341,12 +358,13 @@ export class ProductList implements OnInit {
     }
 
     const data = {
-      userId,
       productId: product.id,
       quantity
     };
 
-    this.addingProductId = product.id;
+    this.addingProductId =
+      product.id;
+
     this.cdr.markForCheck();
 
     this.cartService
@@ -363,8 +381,11 @@ export class ProductList implements OnInit {
             }
           );
 
-          this.quantities[product.id] = 1;
-          this.addingProductId = null;
+          this.quantities[product.id] =
+            1;
+
+          this.addingProductId =
+            null;
 
           this.cdr.markForCheck();
         },
@@ -376,14 +397,16 @@ export class ProductList implements OnInit {
           );
 
           this.snackBar.open(
-            'No se pudo agregar el producto.',
+            error?.error?.message ??
+              'No se pudo agregar el producto.',
             'Cerrar',
             {
               duration: 3000
             }
           );
 
-          this.addingProductId = null;
+          this.addingProductId =
+            null;
 
           this.cdr.markForCheck();
         }

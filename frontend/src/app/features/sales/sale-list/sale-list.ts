@@ -5,24 +5,27 @@ import {
 } from '@angular/core';
 
 import {
-  CommonModule,
   CurrencyPipe,
   DatePipe
 } from '@angular/common';
+
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
-
-import {
-  MatProgressSpinnerModule
-} from '@angular/material/progress-spinner';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import {
   MatSnackBar,
   MatSnackBarModule
 } from '@angular/material/snack-bar';
+
+import {
+  Observable,
+  finalize
+} from 'rxjs';
 
 import { Auth } from '../../../core/services/auth';
 import { SaleService } from '../../../core/services/sale';
@@ -32,7 +35,6 @@ import { Sale } from '../../../core/models/sale';
   selector: 'app-sale-list',
   standalone: true,
   imports: [
-    CommonModule,
     CurrencyPipe,
     DatePipe,
     MatCardModule,
@@ -48,88 +50,107 @@ import { Sale } from '../../../core/models/sale';
 export class SaleList implements OnInit {
 
   sales: Sale[] = [];
-  userId: string | null = null;
 
   loading = true;
   errorMessage = '';
 
   constructor(
-    private saleService: SaleService,
-    private auth: Auth,
-    private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef
+    private readonly saleService: SaleService,
+    public readonly auth: Auth,
+    private readonly snackBar: MatSnackBar,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.userId = this.auth.getUserId();
-
-    if (!this.userId) {
-      this.loading = false;
-      this.errorMessage =
-        'No hay un usuario autenticado.';
-
-      this.snackBar.open(
-        this.errorMessage,
-        'Cerrar',
-        {
-          duration: 3000
-        }
-      );
-
-      this.cdr.markForCheck();
-      return;
-    }
-
     this.loadSales();
   }
 
   loadSales(): void {
-    if (!this.userId) {
+    if (!this.auth.isLoggedIn()) {
+      this.handleMissingUser();
       return;
     }
 
     this.loading = true;
     this.errorMessage = '';
 
-    this.saleService
-      .getSales(this.userId)
-      .subscribe({
-        next: data => {
-         this.sales = data;
+    const salesRequest: Observable<Sale[]> =
+      this.auth.isAdmin()
+        ? this.saleService.getAllSales()
+        : this.saleService.getMySales();
 
+    salesRequest
+      .pipe(
+        finalize(() => {
           this.loading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (sales: Sale[]) => {
+          this.sales = sales;
           this.cdr.markForCheck();
         },
 
-        error: error => {
+        error: (error: HttpErrorResponse) => {
           console.error(
             'Error cargando ventas:',
             error
           );
 
-          this.errorMessage =
-            'No se pudo cargar el historial de compras.';
+          this.sales = [];
 
-          this.loading = false;
+          this.errorMessage = this.auth.isAdmin()
+            ? 'No se pudo cargar el listado de ventas.'
+            : 'No se pudo cargar tu historial de compras.';
+
+          this.snackBar.open(
+            this.errorMessage,
+            'Cerrar',
+            {
+              duration: 3000
+            }
+          );
+
           this.cdr.markForCheck();
         }
       });
   }
 
+  get pageTitle(): string {
+    return this.auth.isAdmin()
+      ? 'Ventas'
+      : 'Mis compras';
+  }
+
+  get emptyMessage(): string {
+    return this.auth.isAdmin()
+      ? 'Todavía no se han registrado ventas.'
+      : 'Todavía no has realizado compras.';
+  }
+
   getSaleNumber(id: number): string {
-    return `#${id.toString().padStart(5, '0')}`;
+    return `#${id
+      .toString()
+      .padStart(5, '0')}`;
   }
 
   getTotalSpent(): number {
     return this.sales.reduce(
-      (total, sale) => total + sale.total,
+      (
+        total: number,
+        sale: Sale
+      ) => total + sale.total,
       0
     );
   }
 
   getTotalUnits(): number {
     return this.sales.reduce(
-      (total, sale) => total + sale.totalItems,
+      (
+        total: number,
+        sale: Sale
+      ) => total + sale.totalItems,
       0
     );
   }
@@ -141,9 +162,29 @@ export class SaleList implements OnInit {
     return price * quantity;
   }
 
-  getProductsLabel(totalItems: number): string {
+  getProductsLabel(
+    totalItems: number
+  ): string {
     return totalItems === 1
       ? '1 producto'
       : `${totalItems} productos`;
+  }
+
+  private handleMissingUser(): void {
+    this.sales = [];
+    this.loading = false;
+
+    this.errorMessage =
+      'No hay un usuario autenticado.';
+
+    this.snackBar.open(
+      this.errorMessage,
+      'Cerrar',
+      {
+        duration: 3000
+      }
+    );
+
+    this.cdr.markForCheck();
   }
 }

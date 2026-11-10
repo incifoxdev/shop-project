@@ -1,95 +1,174 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
+import {
+  Observable,
+  catchError,
+  finalize,
+  of,
+  tap
+} from 'rxjs';
+
 import { environment } from '../../../environments/environment';
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+}
+
+export interface CurrentUser {
+  id: string;
+  name: string;
+  email: string;
+  enabled: boolean;
+  createdAt: string | null;
+  roles: string[];
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class Auth {
 
-  private apiUrl = environment.apiUrl;
+  private readonly apiUrl = environment.apiUrl;
+
+  private readonly currentUserSignal = signal<CurrentUser | null>(
+    this.readStoredUser()
+  );
+
+  private readonly initializedSignal = signal(false);
+
+  readonly currentUser = this.currentUserSignal.asReadonly();
+  readonly initialized = this.initializedSignal.asReadonly();
 
   constructor(
-    private http: HttpClient
+    private readonly http: HttpClient
   ) {}
 
-  login(data: any) {
-    return this.http.post<any>(
+  login(data: LoginRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(
       `${this.apiUrl}/auth/login`,
       data
     );
   }
 
-  saveSession(response: any): void {
-    localStorage.setItem(
-      'token',
-      response.token
-    );
+  saveToken(token: string): void {
+    localStorage.setItem('token', token);
+  }
 
-    localStorage.setItem(
-      'userId',
-      response.userId
-    );
+  loadCurrentUser(): Observable<CurrentUser> {
+    return this.http.get<CurrentUser>(
+      `${this.apiUrl}/users/me`
+    ).pipe(
+      tap(user => {
+        localStorage.setItem(
+          'currentUser',
+          JSON.stringify(user)
+        );
 
-    localStorage.setItem(
-      'email',
-      response.email
+        this.currentUserSignal.set(user);
+      })
     );
+  }
 
-    localStorage.setItem(
-      'role',
-      response.role
+  restoreSession(): Observable<CurrentUser | null> {
+    const token = this.getToken();
+
+    if (!token) {
+      localStorage.removeItem('currentUser');
+
+      this.currentUserSignal.set(null);
+      this.initializedSignal.set(true);
+
+      return of(null);
+    }
+
+    return this.loadCurrentUser().pipe(
+      catchError(error => {
+        console.error(
+          'No fue posible restaurar la sesión:',
+          error
+        );
+
+        this.clearSession();
+
+        return of(null);
+      }),
+      finalize(() => {
+        this.initializedSignal.set(true);
+      })
     );
   }
 
   getToken(): string | null {
-    return localStorage.getItem(
-      'token'
-    );
+    return localStorage.getItem('token');
+  }
+
+  getCurrentUser(): CurrentUser | null {
+    return this.currentUser();
   }
 
   getUserId(): string | null {
-    return localStorage.getItem(
-      'userId'
-    );
+    return this.currentUser()?.id ?? null;
+  }
+
+  getUserName(): string {
+    return this.currentUser()?.name ?? '';
   }
 
   getEmail(): string | null {
-    return localStorage.getItem(
-      'email'
-    );
+    return this.currentUser()?.email ?? null;
   }
 
-  getRole(): string | null {
-    return localStorage.getItem(
-      'role'
-    );
+  getRoles(): string[] {
+    return this.currentUser()?.roles ?? [];
+  }
+
+  hasRole(role: string): boolean {
+    return this.getRoles().includes(role);
   }
 
   isAdmin(): boolean {
-    return this.getRole() === 'ROLE_ADMIN';
+    return this.hasRole('ROLE_ADMIN');
   }
 
-  logout(): void {
-    localStorage.removeItem(
-      'token'
-    );
-
-    localStorage.removeItem(
-      'userId'
-    );
-
-    localStorage.removeItem(
-      'email'
-    );
-
-    localStorage.removeItem(
-      'role'
-    );
+  isUser(): boolean {
+    return this.hasRole('ROLE_USER');
   }
 
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    return this.getToken() !== null;
+  }
+
+  logout(): void {
+    this.clearSession();
+    this.initializedSignal.set(true);
+  }
+
+  private clearSession(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('currentUser');
+
+    this.currentUserSignal.set(null);
+  }
+
+  private readStoredUser(): CurrentUser | null {
+    const storedUser = localStorage.getItem('currentUser');
+
+    if (!storedUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(storedUser) as CurrentUser;
+    } catch {
+      localStorage.removeItem('currentUser');
+
+      return null;
+    }
   }
 }

@@ -123,7 +123,7 @@ export class Dashboard
         this.productService.getProducts(),
 
       sales:
-        this.saleService.getSales(userId),
+        this.saleService.getMySales(),
 
       stats:
         this.dashboardService.getStats()

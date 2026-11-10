@@ -2,6 +2,7 @@ package SpringBootRest.mappers;
 
 import SpringBootRest.dto.UserRequestDTO;
 import SpringBootRest.dto.UserResponseDTO;
+import SpringBootRest.entities.Role;
 import SpringBootRest.entities.User;
 
 public class UserMapper {
@@ -22,8 +23,18 @@ public class UserMapper {
         UserResponseDTO dto = new UserResponseDTO();
 
         dto.setId(user.getId());
-        dto.setEmail(user.getEmail());
         dto.setName(user.getName());
+        dto.setEmail(user.getEmail());
+
+        dto.setEnabled(user.isEnabled());
+        dto.setCreatedAt(user.getCreatedAt());
+
+        dto.setRoles(
+                user.getRoles()
+                        .stream()
+                        .map(Role::getName)
+                        .toList()
+        );
 
         return dto;
     }

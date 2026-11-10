@@ -1,55 +1,94 @@
 <div class="login-container">
 
-
   <mat-card class="login-card">
-
 
     <h2>
       Iniciar sesión
     </h2>
 
-
-    <form [formGroup]="loginForm"
-          (ngSubmit)="login()">
-
+    <form
+      [formGroup]="loginForm"
+      (ngSubmit)="login()">
 
       <mat-form-field appearance="outline">
 
         <mat-label>Email</mat-label>
 
-        <input matInput
-               type="email"
-               formControlName="email">
+        <input
+          matInput
+          type="email"
+          formControlName="email">
+
+        @if (
+          loginForm.controls.email.touched &&
+          loginForm.controls.email.hasError('required')
+        ) {
+          <mat-error>
+            El correo es obligatorio.
+          </mat-error>
+        }
+
+        @if (
+          loginForm.controls.email.touched &&
+          loginForm.controls.email.hasError('email')
+        ) {
+          <mat-error>
+            Ingresa un correo válido.
+          </mat-error>
+        }
 
       </mat-form-field>
-
-
 
       <mat-form-field appearance="outline">
 
-        <mat-label>Password</mat-label>
+        <mat-label>Contraseña</mat-label>
 
-        <input matInput
-               type="password"
-               formControlName="password">
+        <input
+          matInput
+          type="password"
+          formControlName="password">
+
+        @if (
+          loginForm.controls.password.touched &&
+          loginForm.controls.password.hasError('required')
+        ) {
+          <mat-error>
+            La contraseña es obligatoria.
+          </mat-error>
+        }
 
       </mat-form-field>
 
+      @if (errorMessage) {
 
+        <div class="login-error">
 
-      <button mat-raised-button
-              color="primary"
-              type="submit">
+          {{ errorMessage }}
 
-        Ingresar
+        </div>
+
+      }
+
+      <button
+        mat-raised-button
+        color="primary"
+        type="submit"
+        [disabled]="loading">
+
+        @if (!loading) {
+
+          Ingresar
+
+        } @else {
+
+          Ingresando...
+
+        }
 
       </button>
 
-
     </form>
 
-
   </mat-card>
-
 
 </div>

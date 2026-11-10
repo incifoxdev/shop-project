@@ -6,9 +6,11 @@ import SpringBootRest.exception.CartNotFoundException;
 import SpringBootRest.exception.InsufficientStockException;
 import SpringBootRest.repositories.CartRepository;
 import SpringBootRest.repositories.SaleRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +22,7 @@ public class CheckoutService {
     private final CartRepository cartRepository;
     private final SaleRepository saleRepository;
 
+    @Transactional
     public Sale checkout(User user) {
 
         Cart cart = cartRepository.findByUser(user)
@@ -30,7 +33,6 @@ public class CheckoutService {
             throw new CartEmptyException("Cart is empty");
         }
 
-        // validar stock
         for (CartItem item : cart.getItems()) {
 
             if (item.getQuantity() > item.getProduct().getStock()) {
@@ -48,13 +50,12 @@ public class CheckoutService {
 
         List<SaleDetail> details = new ArrayList<>();
 
-        double total = 0;
+        BigDecimal total = BigDecimal.ZERO;
 
         for (CartItem item : cart.getItems()) {
 
             Product product = item.getProduct();
 
-            // descontar stock
             product.setStock(
                     product.getStock() - item.getQuantity()
             );
@@ -68,7 +69,10 @@ public class CheckoutService {
 
             details.add(detail);
 
-            total += item.getQuantity() * product.getPrice();
+            total = total.add(
+                    product.getPrice()
+                            .multiply(BigDecimal.valueOf(item.getQuantity()))
+            );
         }
 
         sale.setTotal(total);
@@ -76,7 +80,6 @@ public class CheckoutService {
 
         Sale saved = saleRepository.save(sale);
 
-        // limpiar carrito
         cart.getItems().clear();
         cartRepository.save(cart);
 

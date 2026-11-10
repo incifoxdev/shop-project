@@ -254,7 +254,7 @@
             </div>
 
             <div class="product-price">
-              {{ product.price | currency:'USD' }}
+              {{ product.price | currency:'CLP':'symbol':'1.0-0':'es-CL' }}
             </div>
 
             @if (product.stock > 0) {
@@ -305,7 +305,7 @@
                   Subtotal:
                   {{
                     product.price * getQuantity(product)
-                      | currency:'USD'
+                      | currency:'CLP':'symbol':'1.0-0':'es-CL'
                   }}
                 </span>
 

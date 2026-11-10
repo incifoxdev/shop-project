@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -23,10 +24,10 @@ public class Product {
 
     private String name;
 
-    private Double price;
+    @Column(precision = 19, scale = 2)
+    private BigDecimal price;
 
     private Integer stock;
-
 
     @OneToMany(
             mappedBy = "product",

@@ -4,19 +4,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { Cart } from '../models/cart';
+import { environment } from '../../../environments/environment';
 
-import {
-  environment
-} from '../../../environments/environment';
-
-interface UpdateCartItemRequest {
-  userId: string;
+export interface UpdateCartItemRequest {
   productId: string;
   quantity: number;
 }
 
-interface AddToCartRequest {
-  userId: string;
+export interface AddToCartRequest {
   productId: string;
   quantity: number;
 }
@@ -30,23 +25,21 @@ export class CartService {
     environment.apiUrl;
 
   constructor(
-    private http: HttpClient
+    private readonly http: HttpClient
   ) {}
 
   addProduct(
     data: AddToCartRequest
   ): Observable<Cart> {
     return this.http.post<Cart>(
-      `${this.apiUrl}/cart/add`,
+      `${this.apiUrl}/cart/items`,
       data
     );
   }
 
-  getCart(
-    userId: string
-  ): Observable<Cart> {
+  getCart(): Observable<Cart> {
     return this.http.get<Cart>(
-      `${this.apiUrl}/cart/${userId}`
+      `${this.apiUrl}/cart/me`
     );
   }
 
@@ -54,25 +47,22 @@ export class CartService {
     data: UpdateCartItemRequest
   ): Observable<Cart> {
     return this.http.put<Cart>(
-      `${this.apiUrl}/cart/update`,
+      `${this.apiUrl}/cart/items`,
       data
     );
   }
 
   removeProduct(
-    userId: string,
     productId: string
   ): Observable<Cart> {
     return this.http.delete<Cart>(
-      `${this.apiUrl}/cart/remove/${userId}/${productId}`
+      `${this.apiUrl}/cart/items/${productId}`
     );
   }
 
-  clearCart(
-    userId: string
-  ): Observable<void> {
+  clearCart(): Observable<void> {
     return this.http.delete<void>(
-      `${this.apiUrl}/cart/clear/${userId}`
+      `${this.apiUrl}/cart/me`
     );
   }
 }
