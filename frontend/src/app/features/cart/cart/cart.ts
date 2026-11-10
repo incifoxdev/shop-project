@@ -48,8 +48,6 @@ import {
 })
 export class Cart implements OnInit {
 
-  userId: string | null = null;
-
   cart?: CartModel;
 
   loading = true;
@@ -62,17 +60,15 @@ export class Cart implements OnInit {
   removingProductId: string | null = null;
 
   constructor(
-    private cartService: CartService,
-    private saleService: SaleService,
-    private snackBar: MatSnackBar,
-    private auth: Auth,
-    private cdr: ChangeDetectorRef
+    private readonly cartService: CartService,
+    private readonly saleService: SaleService,
+    private readonly snackBar: MatSnackBar,
+    private readonly auth: Auth,
+    private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.userId = this.auth.getUserId();
-
-    if (!this.userId) {
+    if (!this.auth.isLoggedIn()) {
       this.loading = false;
       this.errorMessage =
         'No hay un usuario autenticado.';
@@ -93,7 +89,7 @@ export class Cart implements OnInit {
   }
 
   loadCart(): void {
-    if (!this.userId) {
+    if (!this.auth.isLoggedIn()) {
       return;
     }
 
@@ -101,14 +97,9 @@ export class Cart implements OnInit {
     this.errorMessage = '';
 
     this.cartService
-      .getCart(this.userId)
+      .getCart()
       .subscribe({
-        next: data => {
-          console.log(
-            'Carrito recibido:',
-            data
-          );
-
+        next: (data: CartModel) => {
           this.cart = data;
           this.loading = false;
 
@@ -132,11 +123,9 @@ export class Cart implements OnInit {
   }
 
   increaseQuantity(item: CartItem): void {
-    const newQuantity = item.quantity + 1;
-
     this.updateQuantity(
       item,
-      newQuantity
+      item.quantity + 1
     );
   }
 
@@ -145,11 +134,9 @@ export class Cart implements OnInit {
       return;
     }
 
-    const newQuantity = item.quantity - 1;
-
     this.updateQuantity(
       item,
-      newQuantity
+      item.quantity - 1
     );
   }
 
@@ -157,11 +144,10 @@ export class Cart implements OnInit {
     item: CartItem,
     quantity: number
   ): void {
-    if (!this.userId) {
-      return;
-    }
-
-    if (quantity < 1) {
+    if (
+      !this.auth.isLoggedIn() ||
+      quantity < 1
+    ) {
       return;
     }
 
@@ -171,10 +157,6 @@ export class Cart implements OnInit {
     this.updatingProductId =
       item.productId;
 
-    /*
-     * Actualización optimista:
-     * la interfaz cambia inmediatamente.
-     */
     item.quantity = quantity;
     item.subtotal =
       item.price * quantity;
@@ -184,7 +166,6 @@ export class Cart implements OnInit {
     this.cdr.markForCheck();
 
     const data = {
-      userId: this.userId,
       productId: item.productId,
       quantity
     };
@@ -192,9 +173,8 @@ export class Cart implements OnInit {
     this.cartService
       .updateQuantity(data)
       .subscribe({
-        next: updatedCart => {
+        next: (updatedCart: CartModel) => {
           this.cart = updatedCart;
-
           this.updatingProductId = null;
 
           this.cdr.markForCheck();
@@ -206,10 +186,6 @@ export class Cart implements OnInit {
             error
           );
 
-          /*
-           * Si falla el backend, restauramos
-           * la cantidad anterior.
-           */
           item.quantity =
             previousQuantity;
 
@@ -237,7 +213,7 @@ export class Cart implements OnInit {
   }
 
   removeProduct(item: CartItem): void {
-    if (!this.userId) {
+    if (!this.auth.isLoggedIn()) {
       return;
     }
 
@@ -247,14 +223,10 @@ export class Cart implements OnInit {
     this.cdr.markForCheck();
 
     this.cartService
-      .removeProduct(
-        this.userId,
-        item.productId
-      )
+      .removeProduct(item.productId)
       .subscribe({
-        next: updatedCart => {
+        next: (updatedCart: CartModel) => {
           this.cart = updatedCart;
-
           this.removingProductId = null;
 
           this.snackBar.open(
@@ -291,7 +263,7 @@ export class Cart implements OnInit {
 
   clearCart(): void {
     if (
-      !this.userId ||
+      !this.auth.isLoggedIn() ||
       !this.cart ||
       this.cart.totalItems === 0
     ) {
@@ -311,7 +283,7 @@ export class Cart implements OnInit {
     this.cdr.markForCheck();
 
     this.cartService
-      .clearCart(this.userId)
+      .clearCart()
       .subscribe({
         next: () => {
           this.clearingCart = false;
@@ -358,7 +330,7 @@ export class Cart implements OnInit {
   }
 
   checkout(): void {
-    if (!this.userId) {
+    if (!this.auth.isLoggedIn()) {
       this.snackBar.open(
         'No hay un usuario autenticado.',
         'Cerrar',
@@ -400,7 +372,7 @@ export class Cart implements OnInit {
     this.cdr.markForCheck();
 
     this.saleService
-      .checkout(this.userId)
+      .checkout()
       .subscribe({
         next: () => {
           this.processingCheckout = false;
@@ -479,14 +451,19 @@ export class Cart implements OnInit {
 
     this.cart.totalItems =
       this.cart.items.reduce(
-        (total, item) =>
-          total + item.quantity,
+        (
+          total: number,
+          item: CartItem
+        ) => total + item.quantity,
         0
       );
 
     this.cart.totalAmount =
       this.cart.items.reduce(
-        (total, item) =>
+        (
+          total: number,
+          item: CartItem
+        ) =>
           total +
           item.price * item.quantity,
         0
@@ -508,10 +485,11 @@ export class Cart implements OnInit {
     amount: number
   ): string {
     return new Intl.NumberFormat(
-      'es-ES',
+      'es-CL',
       {
         style: 'currency',
-        currency: 'USD'
+        currency: 'CLP',
+        maximumFractionDigits: 0
       }
     ).format(amount);
   }

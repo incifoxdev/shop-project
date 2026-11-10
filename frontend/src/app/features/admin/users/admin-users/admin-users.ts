@@ -60,6 +60,9 @@ import {
 import {
   MatTableModule
 } from '@angular/material/table';
+import {
+  MatCheckboxModule
+} from '@angular/material/checkbox';
 
 import {
   CreateUserRequest,
@@ -70,31 +73,34 @@ import {
 import {
   UserService
 } from '../../../../core/services/user';
+import { Auth } from '../../../../core/services/auth';
 
 interface UserFormValue {
   name: string;
   email: string;
   password: string;
   enabled: boolean;
+  roles: string[];
 }
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
  imports: [
-    CommonModule,
-    DatePipe,
-    ReactiveFormsModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatSlideToggleModule,
-    MatSnackBarModule,
-    MatTableModule
-  ],
+  CommonModule,
+  DatePipe,
+  ReactiveFormsModule,
+  MatButtonModule,
+  MatCardModule,
+  MatFormFieldModule,
+  MatIconModule,
+  MatInputModule,
+  MatProgressSpinnerModule,
+  MatSlideToggleModule,
+  MatSnackBarModule,
+  MatTableModule,
+  MatCheckboxModule
+],
   templateUrl: './admin-users.html',
   styleUrl: './admin-users.css'
 })
@@ -123,33 +129,41 @@ constructor(
   private readonly fb: FormBuilder,
   private readonly userService: UserService,
   private readonly snackBar: MatSnackBar,
+  public readonly auth: Auth,
   private readonly cdr: ChangeDetectorRef
 ) {
-  this.userForm = this.fb.nonNullable.group({
-    name: [
-      '',
-      [
-        Validators.required,
-        Validators.minLength(2),
-        Validators.maxLength(100)
-      ]
-    ],
-    email: [
-      '',
-      [
-        Validators.required,
-        Validators.email
-      ]
-    ],
-    password: [
-      '',
-      [
-        Validators.minLength(6),
-        Validators.maxLength(100)
-      ]
-    ],
-    enabled: [true]
-  });
+this.userForm = this.fb.nonNullable.group({
+  name: [
+    '',
+    [
+      Validators.required,
+      Validators.minLength(2),
+      Validators.maxLength(100)
+    ]
+  ],
+
+  email: [
+    '',
+    [
+      Validators.required,
+      Validators.email
+    ]
+  ],
+
+  password: [
+    '',
+    [
+      Validators.minLength(6),
+      Validators.maxLength(100)
+    ]
+  ],
+
+  enabled: [true],
+
+  roles: this.fb.nonNullable.control<string[]>([
+    'ROLE_USER'
+  ])
+});
 }
 
   ngOnInit(): void {
@@ -159,6 +173,45 @@ constructor(
   get isEditing(): boolean {
     return this.editingUserId !== null;
   }
+ isCurrentUser(user: User): boolean {
+  return user.id === this.auth.getUserId();
+}
+
+hasRole(role: string): boolean {
+  return this.userForm.controls.roles.value
+    .includes(role);
+}
+
+toggleRole(
+  role: string,
+  checked: boolean
+): void {
+  const currentRoles = [
+    ...this.userForm.controls.roles.value
+  ];
+
+  if (checked) {
+    if (!currentRoles.includes(role)) {
+      this.userForm.controls.roles.setValue([
+        ...currentRoles,
+        role
+      ]);
+    }
+  } else {
+    this.userForm.controls.roles.setValue(
+      currentRoles.filter(
+        (currentRole: string) =>
+          currentRole !== role
+      )
+    );
+  }
+
+  this.userForm.controls.roles.markAsDirty();
+
+  this.cdr.markForCheck();
+}
+
+
 
 loadUsers(): void {
   if (this.loading) {
@@ -238,28 +291,37 @@ loadUsers(): void {
     this.createUser(formValue);
   }
 
-  editUser(user: User): void {
-    if (this.saving) {
-      return;
-    }
-
-    this.editingUserId = user.id;
-
-    this.userForm.reset({
-      name: user.name,
-      email: user.email,
-      password: '',
-      enabled: user.enabled
-    });
-
-    this.userForm.markAsPristine();
-    this.userForm.markAsUntouched();
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+editUser(user: User): void {
+  if (this.saving) {
+    return;
   }
+
+  this.editingUserId = user.id;
+
+  this.userForm.reset({
+    name: user.name,
+    email: user.email,
+    password: '',
+    enabled: user.enabled,
+    roles: [...user.roles]
+  });
+
+  if (this.isCurrentUser(user)) {
+    this.userForm.controls.enabled.disable();
+  } else {
+    this.userForm.controls.enabled.enable();
+  }
+
+  this.userForm.markAsPristine();
+  this.userForm.markAsUntouched();
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+
+  this.cdr.markForCheck();
+}
 
   cancelEdit(): void {
     this.editingUserId = null;
@@ -267,62 +329,76 @@ loadUsers(): void {
     this.resetForm();
   }
 
-  deleteUser(user: User): void {
-    if (
-      this.deletingUserId !== null ||
-      this.saving
-    ) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `¿Deseas eliminar al usuario "${user.name}"? Esta acción no se puede deshacer.`
+ deleteUser(user: User): void {
+  if (this.isCurrentUser(user)) {
+    this.showMessage(
+      'No puedes eliminar tu propia cuenta.'
     );
 
-    if (!confirmed) {
-      return;
-    }
-
-    this.deletingUserId = user.id;
-
-    this.userService
-      .delete(user.id)
-      .pipe(
-        finalize(() => {
-          this.deletingUserId = null;
-        })
-      )
-      .subscribe({
-        next: () => {
-          this.users = this.users.filter(
-  (currentUser: User) =>
-    currentUser.id !== user.id
-);
-
-          if (this.editingUserId === user.id) {
-            this.cancelEdit();
-          }
-
-          this.showMessage(
-            'Usuario eliminado correctamente.'
-          );
-        },
-
-        error: (error: HttpErrorResponse) => {
-          console.error(
-            'Error eliminando usuario:',
-            error
-          );
-
-          this.showMessage(
-            this.getBackendError(
-              error,
-              'No se pudo eliminar el usuario.'
-            )
-          );
-        }
-      });
+    return;
   }
+
+  if (
+    this.deletingUserId !== null ||
+    this.saving
+  ) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `¿Deseas eliminar al usuario "${user.name}"? Esta acción no se puede deshacer.`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  this.deletingUserId = user.id;
+  this.cdr.markForCheck();
+
+  this.userService
+    .delete(user.id)
+    .pipe(
+      finalize(() => {
+        this.deletingUserId = null;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe({
+      next: () => {
+        this.users = this.users.filter(
+          (currentUser: User) =>
+            currentUser.id !== user.id
+        );
+
+        if (this.editingUserId === user.id) {
+          this.cancelEdit();
+        }
+
+        this.showMessage(
+          'Usuario eliminado correctamente.'
+        );
+
+        this.cdr.markForCheck();
+      },
+
+      error: (error: HttpErrorResponse) => {
+        console.error(
+          'Error eliminando usuario:',
+          error
+        );
+
+        this.showMessage(
+          this.getBackendError(
+            error,
+            'No se pudo eliminar el usuario.'
+          )
+        );
+
+        this.cdr.markForCheck();
+      }
+    });
+}
 
   getRolesLabel(roles: string[] | null | undefined): string {
     if (!roles?.length) {
@@ -395,77 +471,106 @@ loadUsers(): void {
       });
   }
 
-  private updateUser(
-    id: string,
-    formValue: UserFormValue
-  ): void {
-    const request: UpdateUserRequest = {
-      name: formValue.name.trim(),
-      email: formValue.email.trim().toLowerCase(),
-      enabled: formValue.enabled
-    };
+private updateUser(
+  id: string,
+  formValue: UserFormValue
+): void {
 
-    const password = formValue.password.trim();
+  const roles = [
+    ...new Set(formValue.roles)
+  ];
 
-    if (password) {
-      request.password = password;
-    }
+  if (roles.length === 0) {
+    this.saving = false;
 
-    this.userService
-      .update(id, request)
-      .pipe(
-        finalize(() => {
-          this.saving = false;
-        })
-      )
-      .subscribe({
-        next: (updatedUser: User) => {
-  this.users = this.users.map((user: User) =>
+    this.showMessage(
+      'El usuario debe tener al menos un rol.'
+    );
+
+    return;
+  }
+
+  const request: UpdateUserRequest = {
+    name: formValue.name.trim(),
+    email: formValue.email
+      .trim()
+      .toLowerCase(),
+    enabled: formValue.enabled,
+    roles
+  };
+
+  const password =
+    formValue.password.trim();
+
+  if (password) {
+    request.password = password;
+  }
+
+  this.userService
+    .update(id, request)
+    .pipe(
+      finalize(() => {
+        this.saving = false;
+        this.cdr.markForCheck();
+      })
+    )
+    .subscribe({
+      next: (updatedUser: User) => {
+
+        this.users = this.users.map(
+          (user: User) =>
             user.id === updatedUser.id
               ? updatedUser
               : user
-          );
+        );
 
-          this.editingUserId = null;
+        this.editingUserId = null;
 
-          this.resetForm();
+        this.resetForm();
 
-          this.showMessage(
-            'Usuario actualizado correctamente.'
-          );
-        },
+        this.showMessage(
+          'Usuario actualizado correctamente.'
+        );
 
-        error: (error: HttpErrorResponse) => {
-          console.error(
-            'Error actualizando usuario:',
-            error
-          );
+        this.cdr.markForCheck();
+      },
 
-          this.showMessage(
-            this.getBackendError(
-              error,
-              'No se pudo actualizar el usuario.'
-            )
-          );
-        }
-      });
-  }
+      error: (error: HttpErrorResponse) => {
+        console.error(
+          'Error actualizando usuario:',
+          error
+        );
 
-  private resetForm(): void {
-    this.userForm.reset({
-      name: '',
-      email: '',
-      password: '',
-      enabled: true
+        this.showMessage(
+          this.getBackendError(
+            error,
+            'No se pudo actualizar el usuario.'
+          )
+        );
+
+        this.cdr.markForCheck();
+      }
     });
+}
 
-    this.userForm.controls.password.setErrors(
-      null
-    );
+private resetForm(): void {
+  this.userForm.controls.enabled.enable();
 
-    this.userForm.markAsPristine();
-    this.userForm.markAsUntouched();
-  }
+  this.userForm.reset({
+    name: '',
+    email: '',
+    password: '',
+    enabled: true,
+    roles: ['ROLE_USER']
+  });
+
+  this.userForm.controls.password.setErrors(null);
+
+  this.userForm.markAsPristine();
+  this.userForm.markAsUntouched();
+
+  this.cdr.markForCheck();
+}
 
   private showMessage(message: string): void {
     this.snackBar.open(
@@ -537,6 +642,19 @@ loadUsers(): void {
     if (error.status === 409) {
       return 'Ya existe un usuario con ese correo electrónico.';
     }
+    if (
+  typeof response === 'string' &&
+  response.includes('disable your own account')
+) {
+  return 'No puedes desactivar tu propia cuenta.';
+}
+
+if (
+  typeof response === 'string' &&
+  response.includes('delete your own account')
+) {
+  return 'No puedes eliminar tu propia cuenta.';
+}
 
     return fallback;
   }

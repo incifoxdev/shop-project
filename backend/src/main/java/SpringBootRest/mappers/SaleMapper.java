@@ -4,6 +4,8 @@ import SpringBootRest.dto.SaleDTO;
 import SpringBootRest.dto.SaleDetailDTO;
 import SpringBootRest.entities.Sale;
 
+import java.math.BigDecimal;
+
 public class SaleMapper {
 
     public static SaleDTO toDTO(Sale sale) {
@@ -12,25 +14,51 @@ public class SaleMapper {
 
         dto.setId(sale.getId());
         dto.setCreatedAt(sale.getCreatedAt());
-        dto.setUserId(sale.getUser().getId());
+
+        dto.setUserId(
+                sale.getUser().getId()
+        );
+
+        dto.setUserName(
+                sale.getUser().getName()
+        );
+
+        dto.setUserEmail(
+                sale.getUser().getEmail()
+        );
 
         dto.setDetails(
                 sale.getDetails()
                         .stream()
-                        .map(d -> {
+                        .map(detail -> {
 
-                            SaleDetailDTO sd = new SaleDetailDTO();
+                            SaleDetailDTO saleDetailDTO =
+                                    new SaleDetailDTO();
 
-                            sd.setProductId(d.getProduct().getId());
-                            sd.setProductName(d.getProduct().getName());
-                            sd.setPrice(d.getPrice());
-                            sd.setQuantity(d.getQuantity());
-
-                            sd.setSubtotal(
-                                    d.getPrice() * d.getQuantity()
+                            saleDetailDTO.setProductId(
+                                    detail.getProduct().getId()
                             );
 
-                            return sd;
+                            saleDetailDTO.setProductName(
+                                    detail.getProduct().getName()
+                            );
+
+                            saleDetailDTO.setPrice(
+                                    detail.getPrice()
+                            );
+
+                            saleDetailDTO.setQuantity(
+                                    detail.getQuantity()
+                            );
+
+                            saleDetailDTO.setSubtotal(
+                                    detail.getPrice()
+                                            .multiply(BigDecimal.valueOf(
+                                                    detail.getQuantity()
+                                            ))
+                            );
+
+                            return saleDetailDTO;
                         })
                         .toList()
         );
@@ -38,17 +66,22 @@ public class SaleMapper {
         dto.setTotalItems(
                 sale.getDetails()
                         .stream()
-                        .mapToInt(d -> d.getQuantity())
+                        .mapToInt(detail ->
+                                detail.getQuantity()
+                        )
                         .sum()
         );
 
         dto.setTotal(
                 sale.getDetails()
                         .stream()
-                        .mapToDouble(d ->
-                                d.getPrice() * d.getQuantity()
+                        .map(detail ->
+                                detail.getPrice()
+                                        .multiply(BigDecimal.valueOf(
+                                                detail.getQuantity()
+                                        ))
                         )
-                        .sum()
+                        .reduce(BigDecimal.ZERO, BigDecimal::add)
         );
 
         return dto;

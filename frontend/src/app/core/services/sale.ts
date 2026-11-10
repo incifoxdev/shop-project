@@ -23,6 +23,12 @@ export class SaleService {
     );
   }
 
+  getMySales(): Observable<Sale[]> {
+    return this.http.get<Sale[]>(
+      `${this.apiUrl}/sales/me`
+    );
+  }
+
   getSales(userId: string): Observable<Sale[]> {
     return this.http.get<Sale[]>(
       `${this.apiUrl}/sales/user/${userId}`
@@ -35,9 +41,9 @@ export class SaleService {
     );
   }
 
-  checkout(userId: string): Observable<Sale> {
+  checkout(): Observable<Sale> {
     return this.http.post<Sale>(
-      `${this.apiUrl}/sales/checkout/${userId}`,
+      `${this.apiUrl}/sales/checkout`,
       {}
     );
   }

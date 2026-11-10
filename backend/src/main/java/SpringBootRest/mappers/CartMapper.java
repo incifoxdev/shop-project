@@ -4,6 +4,7 @@ import SpringBootRest.dto.CartDTO;
 import SpringBootRest.dto.CartItemDTO;
 import SpringBootRest.entities.Cart;
 
+import java.math.BigDecimal;
 import java.util.stream.Collectors;
 
 public class CartMapper {
@@ -27,7 +28,10 @@ public class CartMapper {
                             i.setQuantity(item.getQuantity());
 
                             i.setSubtotal(
-                                    item.getQuantity() * item.getProduct().getPrice()
+                                    item.getProduct().getPrice()
+                                            .multiply(BigDecimal.valueOf(
+                                                    item.getQuantity()
+                                            ))
                             );
 
                             return i;
@@ -45,10 +49,13 @@ public class CartMapper {
         dto.setTotalAmount(
                 cart.getItems()
                         .stream()
-                        .mapToDouble(item ->
-                                item.getQuantity() * item.getProduct().getPrice()
+                        .map(item ->
+                                item.getProduct().getPrice()
+                                        .multiply(BigDecimal.valueOf(
+                                                item.getQuantity()
+                                        ))
                         )
-                        .sum()
+                        .reduce(BigDecimal.ZERO, BigDecimal::add)
         );
 
         return dto;

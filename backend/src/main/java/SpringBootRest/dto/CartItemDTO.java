@@ -1,5 +1,6 @@
 package SpringBootRest.dto;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class CartItemDTO {
@@ -8,11 +9,11 @@ public class CartItemDTO {
 
     private String productName;
 
-    private double price;
+    private BigDecimal price;
 
     private int quantity;
 
-    private double subtotal;
+    private BigDecimal subtotal;
 
     public UUID getProductId() {
         return productId;
@@ -30,11 +31,11 @@ public class CartItemDTO {
         this.productName = productName;
     }
 
-    public double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 
@@ -46,11 +47,11 @@ public class CartItemDTO {
         this.quantity = quantity;
     }
 
-    public double getSubtotal() {
+    public BigDecimal getSubtotal() {
         return subtotal;
     }
 
-    public void setSubtotal(double subtotal) {
+    public void setSubtotal(BigDecimal subtotal) {
         this.subtotal = subtotal;
     }
 }

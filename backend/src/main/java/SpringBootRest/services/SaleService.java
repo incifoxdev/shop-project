@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ public class SaleService {
         sale.setCreatedAt(LocalDateTime.now());
 
         List<SaleDetail> details = new ArrayList<>();
-        double total = 0;
+        BigDecimal total = BigDecimal.ZERO;
 
         for (CartItem item : cart.getItems()) {
 
@@ -65,7 +66,10 @@ public class SaleService {
 
             details.add(detail);
 
-            total += product.getPrice() * item.getQuantity();
+            total = total.add(
+                    product.getPrice()
+                            .multiply(BigDecimal.valueOf(item.getQuantity()))
+            );
         }
 
         sale.setDetails(details);
@@ -90,6 +94,6 @@ public class SaleService {
     }
 
     public List<Sale> findByUser(User user) {
-    return saleRepository.findByUserOrderByCreatedAtDesc(user);
-}
+        return saleRepository.findByUserOrderByCreatedAtDesc(user);
+    }
 }

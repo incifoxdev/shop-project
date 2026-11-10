@@ -481,3 +481,46 @@
     min-height: 175px;
   }
 }
+.buyer-detail {
+  min-width: 180px;
+}
+
+.buyer-detail small {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.buyer-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.buyer-card mat-icon {
+  color: #2563eb;
+}
+
+.buyer-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.buyer-card span,
+.buyer-card small {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.buyer-card strong {
+  color: #0f172a;
+  font-size: 14px;
+}

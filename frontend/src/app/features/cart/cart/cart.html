@@ -145,7 +145,7 @@
 
               <span class="unit-price">
                 Precio unitario:
-                {{ item.price | currency:'USD' }}
+                {{ item.price | currency:'CLP':'symbol':'1.0-0':'es-CL' }}
               </span>
 
               <button
@@ -235,7 +235,7 @@
                   getSubtotal(
                     item.price,
                     item.quantity
-                  ) | currency:'USD'
+                  ) | currency:'CLP':'symbol':'1.0-0':'es-CL'
                 }}
               </strong>
 
@@ -284,7 +284,7 @@
             <span>Subtotal</span>
 
             <strong>
-              {{ cart.totalAmount | currency:'USD' }}
+              {{ cart.totalAmount | currency:'CLP':'symbol':'1.0-0':'es-CL' }}
             </strong>
 
           </div>
@@ -296,7 +296,7 @@
             <span>Total a pagar</span>
 
             <strong>
-              {{ cart.totalAmount | currency:'USD' }}
+              {{ cart.totalAmount | currency:'CLP':'symbol':'1.0-0':'es-CL' }}
             </strong>
 
           </div>

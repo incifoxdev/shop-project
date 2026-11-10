@@ -12,6 +12,8 @@ import SpringBootRest.services.CartService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -19,18 +21,18 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/cart")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class CartController {
 
     private final CartService cartService;
     private final UserRepository userRepository;
 
-    @PostMapping("/add")
+    @PostMapping("/items")
     public CartDTO addToCart(
-            @Valid @RequestBody AddToCartRequest request
+            @Valid @RequestBody AddToCartRequest request,
+            Authentication authentication
     ) {
-
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        User user = getAuthenticatedUser(authentication);
 
         Cart cart = cartService.addProduct(
                 user,
@@ -41,52 +43,69 @@ public class CartController {
         return CartMapper.toDTO(cart);
     }
 
-    @GetMapping("/{userId}")
-    public CartDTO getCart(@PathVariable UUID userId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+    @GetMapping("/me")
+    public CartDTO getCart(
+            Authentication authentication
+    ) {
+        User user = getAuthenticatedUser(authentication);
 
         Cart cart = cartService.getOrCreateCart(user);
 
         return CartMapper.toDTO(cart);
     }
-    @PutMapping("/update")
-    public CartDTO updateQuantity(
-            @Valid @RequestBody UpdateCartItemRequest request) {
 
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not found"));
+    @PutMapping("/items")
+    public CartDTO updateQuantity(
+            @Valid @RequestBody UpdateCartItemRequest request,
+            Authentication authentication
+    ) {
+        User user = getAuthenticatedUser(authentication);
 
         Cart cart = cartService.updateQuantity(
                 user,
                 request.getProductId(),
-                request.getQuantity());
+                request.getQuantity()
+        );
 
         return CartMapper.toDTO(cart);
     }
-    @DeleteMapping("/remove/{userId}/{productId}")
+
+    @DeleteMapping("/items/{productId}")
     public CartDTO removeProduct(
-            @PathVariable UUID userId,
-            @PathVariable UUID productId) {
+            @PathVariable UUID productId,
+            Authentication authentication
+    ) {
+        User user = getAuthenticatedUser(authentication);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not found"));
-
-        Cart cart = cartService.removeProduct(user, productId);
+        Cart cart = cartService.removeProduct(
+                user,
+                productId
+        );
 
         return CartMapper.toDTO(cart);
     }
-    @DeleteMapping("/clear/{userId}")
-    public ResponseEntity<Void> clearCart(@PathVariable UUID userId) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> clearCart(
+            Authentication authentication
+    ) {
+        User user = getAuthenticatedUser(authentication);
 
         cartService.clearCart(user);
 
         return ResponseEntity.noContent().build();
+    }
+
+    private User getAuthenticatedUser(
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User not found"
+                        )
+                );
     }
 }

@@ -2,6 +2,7 @@ package SpringBootRest.controllers;
 
 import SpringBootRest.dto.UserRequestDTO;
 import SpringBootRest.dto.UserResponseDTO;
+import SpringBootRest.dto.UserUpdateRequestDTO;
 import SpringBootRest.entities.User;
 import SpringBootRest.mappers.UserMapper;
 import SpringBootRest.services.UserService;
@@ -9,7 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import SpringBootRest.dto.UserUpdateRequestDTO;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -57,21 +58,30 @@ public class UserController {
         );
     }
 
-   @PutMapping("/{id}")
-public UserResponseDTO update(
-        @PathVariable UUID id,
-        @Valid @RequestBody UserUpdateRequestDTO request
-) {
-    User user = userService.update(id, request);
+    @PutMapping("/{id}")
+    public UserResponseDTO update(
+            @PathVariable UUID id,
+            @Valid @RequestBody UserUpdateRequestDTO request,
+            Authentication authentication
+    ) {
+        User user = userService.update(
+                id,
+                request,
+                authentication.getName()
+        );
 
-    return UserMapper.toDTO(user);
-}
+        return UserMapper.toDTO(user);
+    }
 
     @DeleteMapping("/{id}")
     public String delete(
-            @PathVariable UUID id
+            @PathVariable UUID id,
+            Authentication authentication
     ) {
-        userService.delete(id);
+        userService.delete(
+                id,
+                authentication.getName()
+        );
 
         return "User deleted successfully";
     }

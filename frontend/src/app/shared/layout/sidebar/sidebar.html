@@ -2,7 +2,26 @@
 
   <mat-nav-list>
 
+    <!-- ========================= -->
+    <!-- ADMINISTRADOR -->
+    <!-- ========================= -->
+
     @if (auth.isAdmin()) {
+
+      <a
+        mat-list-item
+        routerLink="/dashboard"
+        routerLinkActive="active-link">
+
+        <mat-icon matListItemIcon>
+          dashboard
+        </mat-icon>
+
+        <span matListItemTitle>
+          Dashboard
+        </span>
+
+      </a>
 
       <a
         mat-list-item
@@ -30,6 +49,74 @@
 
         <span matListItemTitle>
           Usuarios
+        </span>
+
+      </a>
+
+      <a
+        mat-list-item
+        routerLink="/sales"
+        routerLinkActive="active-link">
+
+        <mat-icon matListItemIcon>
+          receipt_long
+        </mat-icon>
+
+        <span matListItemTitle>
+          Ventas
+        </span>
+
+      </a>
+
+    }
+
+    <!-- ========================= -->
+    <!-- USUARIO NORMAL -->
+    <!-- ========================= -->
+
+    @if (!auth.isAdmin()) {
+
+      <a
+        mat-list-item
+        routerLink="/products"
+        routerLinkActive="active-link">
+
+        <mat-icon matListItemIcon>
+          storefront
+        </mat-icon>
+
+        <span matListItemTitle>
+          Productos
+        </span>
+
+      </a>
+
+      <a
+        mat-list-item
+        routerLink="/cart"
+        routerLinkActive="active-link">
+
+        <mat-icon matListItemIcon>
+          shopping_cart
+        </mat-icon>
+
+        <span matListItemTitle>
+          Mi carrito
+        </span>
+
+      </a>
+
+      <a
+        mat-list-item
+        routerLink="/sales"
+        routerLinkActive="active-link">
+
+        <mat-icon matListItemIcon>
+          receipt_long
+        </mat-icon>
+
+        <span matListItemTitle>
+          Mis compras
         </span>
 
       </a>

@@ -3,11 +3,15 @@
   <div class="page-header">
 
     <div>
-      <h1>Administración de usuarios</h1>
+
+      <h1>
+        Administración de usuarios
+      </h1>
 
       <p>
         Crea, edita, activa o elimina usuarios del sistema.
       </p>
+
     </div>
 
     <button
@@ -16,7 +20,9 @@
       (click)="loadUsers()"
       [disabled]="loading">
 
-      <mat-icon>refresh</mat-icon>
+      <mat-icon>
+        refresh
+      </mat-icon>
 
       Actualizar
 
@@ -31,19 +37,23 @@
       <mat-card-header>
 
         <mat-card-title>
+
           @if (isEditing) {
             Editar usuario
           } @else {
             Crear usuario
           }
+
         </mat-card-title>
 
         <mat-card-subtitle>
+
           @if (isEditing) {
             Modifica los datos del usuario seleccionado.
           } @else {
             Registra un nuevo usuario con rol de usuario.
           }
+
         </mat-card-subtitle>
 
       </mat-card-header>
@@ -56,7 +66,9 @@
 
           <mat-form-field appearance="outline">
 
-            <mat-label>Nombre</mat-label>
+            <mat-label>
+              Nombre
+            </mat-label>
 
             <input
               matInput
@@ -64,65 +76,41 @@
               formControlName="name"
               autocomplete="name">
 
-            <mat-icon matSuffix>person</mat-icon>
+            <mat-icon matSuffix>
+              person
+            </mat-icon>
 
             @if (
               userForm.controls.name.touched &&
               userForm.controls.name.hasError('required')
             ) {
+
               <mat-error>
                 El nombre es obligatorio.
               </mat-error>
+
             }
 
             @if (
               userForm.controls.name.touched &&
               userForm.controls.name.hasError('minlength')
             ) {
+
               <mat-error>
                 El nombre debe tener al menos 2 caracteres.
               </mat-error>
+
             }
 
             @if (
               userForm.controls.name.touched &&
               userForm.controls.name.hasError('maxlength')
             ) {
+
               <mat-error>
                 El nombre no puede superar los 100 caracteres.
               </mat-error>
-            }
 
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-
-            <mat-label>Correo electrónico</mat-label>
-
-            <input
-              matInput
-              type="email"
-              formControlName="email"
-              autocomplete="email">
-
-            <mat-icon matSuffix>email</mat-icon>
-
-            @if (
-              userForm.controls.email.touched &&
-              userForm.controls.email.hasError('required')
-            ) {
-              <mat-error>
-                El correo es obligatorio.
-              </mat-error>
-            }
-
-            @if (
-              userForm.controls.email.touched &&
-              userForm.controls.email.hasError('email')
-            ) {
-              <mat-error>
-                Ingresa un correo válido.
-              </mat-error>
             }
 
           </mat-form-field>
@@ -130,74 +118,214 @@
           <mat-form-field appearance="outline">
 
             <mat-label>
+              Correo electrónico
+            </mat-label>
+
+            <input
+              matInput
+              type="email"
+              formControlName="email"
+              autocomplete="email">
+
+            <mat-icon matSuffix>
+              email
+            </mat-icon>
+
+            @if (
+              userForm.controls.email.touched &&
+              userForm.controls.email.hasError('required')
+            ) {
+
+              <mat-error>
+                El correo es obligatorio.
+              </mat-error>
+
+            }
+
+            @if (
+              userForm.controls.email.touched &&
+              userForm.controls.email.hasError('email')
+            ) {
+
+              <mat-error>
+                Ingresa un correo válido.
+              </mat-error>
+
+            }
+
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+
+            <mat-label>
+
               @if (isEditing) {
                 Nueva contraseña
               } @else {
                 Contraseña
               }
+
             </mat-label>
 
             <input
               matInput
               type="password"
               formControlName="password"
-              [autocomplete]="isEditing ? 'new-password' : 'new-password'">
+              autocomplete="new-password">
 
-            <mat-icon matSuffix>lock</mat-icon>
+            <mat-icon matSuffix>
+              lock
+            </mat-icon>
 
             @if (isEditing) {
+
               <mat-hint>
                 Déjala vacía para conservar la contraseña actual.
               </mat-hint>
+
             }
 
             @if (
               userForm.controls.password.touched &&
               userForm.controls.password.hasError('required')
             ) {
+
               <mat-error>
                 La contraseña es obligatoria.
               </mat-error>
+
             }
 
             @if (
               userForm.controls.password.touched &&
               userForm.controls.password.hasError('minlength')
             ) {
+
               <mat-error>
                 Debe tener al menos 6 caracteres.
               </mat-error>
+
             }
 
             @if (
               userForm.controls.password.touched &&
               userForm.controls.password.hasError('maxlength')
             ) {
+
               <mat-error>
                 No puede superar los 100 caracteres.
               </mat-error>
+
             }
 
           </mat-form-field>
 
-          @if (isEditing) {
+ @if (isEditing) {
 
-            <div class="toggle-container">
+  <div class="roles-container">
 
-              <mat-slide-toggle
-                formControlName="enabled">
+    <div class="roles-header">
 
-                Usuario activo
+      <div>
 
-              </mat-slide-toggle>
+        <strong>
+          Roles del usuario
+        </strong>
 
-              <span class="toggle-description">
-                Los usuarios inactivos no deberían poder iniciar sesión.
-              </span>
+        <span>
+          Define los permisos que tendrá
+          este usuario en el sistema.
+        </span>
 
-            </div>
+      </div>
 
-          }
+      <mat-icon>
+        admin_panel_settings
+      </mat-icon>
+
+    </div>
+
+    <div class="roles-options">
+
+      <mat-checkbox
+        [checked]="hasRole('ROLE_USER')"
+        (change)="
+          toggleRole(
+            'ROLE_USER',
+            $event.checked
+          )
+        ">
+
+        Usuario
+
+      </mat-checkbox>
+
+      <mat-checkbox
+        [checked]="hasRole('ROLE_ADMIN')"
+        [disabled]="
+          editingUserId === auth.getUserId()
+        "
+        (change)="
+          toggleRole(
+            'ROLE_ADMIN',
+            $event.checked
+          )
+        ">
+
+        Administrador
+
+      </mat-checkbox>
+
+    </div>
+
+    @if (
+      editingUserId === auth.getUserId()
+    ) {
+
+      <span class="roles-warning">
+
+        <mat-icon>
+          info
+        </mat-icon>
+
+        No puedes quitar tu propio rol
+        de administrador.
+
+      </span>
+
+    }
+
+  </div>
+
+  <div class="toggle-container">
+
+    <mat-slide-toggle
+      formControlName="enabled">
+
+      Usuario activo
+
+    </mat-slide-toggle>
+
+    @if (
+      editingUserId === auth.getUserId()
+    ) {
+
+      <span class="toggle-description">
+        Tu cuenta debe permanecer activa.
+        No puedes desactivarla.
+      </span>
+
+    } @else {
+
+      <span class="toggle-description">
+        Los usuarios inactivos no podrán iniciar sesión.
+      </span>
+
+    }
+
+  </div>
+
+}
 
           <div class="form-actions">
 
@@ -222,17 +350,35 @@
 
               @if (saving) {
 
-                <mat-spinner diameter="20"></mat-spinner>
+                <ng-container>
 
-                Guardando...
+                  <mat-spinner
+                    diameter="20">
+                  </mat-spinner>
+
+                  <span>
+                    Guardando...
+                  </span>
+
+                </ng-container>
 
               } @else {
 
-                <mat-icon>
-                  {{ isEditing ? 'save' : 'person_add' }}
-                </mat-icon>
+                <ng-container>
 
-                {{ isEditing ? 'Actualizar usuario' : 'Crear usuario' }}
+                  <mat-icon>
+                    {{ isEditing ? 'save' : 'person_add' }}
+                  </mat-icon>
+
+                  <span>
+                    {{
+                      isEditing
+                        ? 'Actualizar usuario'
+                        : 'Crear usuario'
+                    }}
+                  </span>
+
+                </ng-container>
 
               }
 
@@ -255,8 +401,15 @@
         </mat-card-title>
 
         <mat-card-subtitle>
+
           {{ users.length }}
-          {{ users.length === 1 ? 'usuario' : 'usuarios' }}
+
+          {{
+            users.length === 1
+              ? 'usuario'
+              : 'usuarios'
+          }}
+
         </mat-card-subtitle>
 
       </mat-card-header>
@@ -267,9 +420,13 @@
 
           <div class="loading-container">
 
-            <mat-spinner diameter="48"></mat-spinner>
+            <mat-spinner
+              diameter="48">
+            </mat-spinner>
 
-            <span>Cargando usuarios...</span>
+            <span>
+              Cargando usuarios...
+            </span>
 
           </div>
 
@@ -277,9 +434,13 @@
 
           <div class="empty-state">
 
-            <mat-icon>group_off</mat-icon>
+            <mat-icon>
+              group_off
+            </mat-icon>
 
-            <h2>No hay usuarios registrados</h2>
+            <h2>
+              No hay usuarios registrados
+            </h2>
 
             <p>
               Usa el formulario para crear el primer usuario.
@@ -312,10 +473,30 @@
                   <div class="user-cell">
 
                     <div class="avatar">
-                      {{ user.name.charAt(0).toUpperCase() }}
+
+                      {{
+                        user.name
+                          .charAt(0)
+                          .toUpperCase()
+                      }}
+
                     </div>
 
-                    <span>{{ user.name }}</span>
+                    <div>
+
+                      <span>
+                        {{ user.name }}
+                      </span>
+
+                      @if (isCurrentUser(user)) {
+
+                        <small class="current-user-label">
+                          Tu cuenta
+                        </small>
+
+                      }
+
+                    </div>
 
                   </div>
 
@@ -358,7 +539,9 @@
                   *matCellDef="let user">
 
                   <span class="role-badge">
+
                     {{ getRolesLabel(user.roles) }}
+
                   </span>
 
                 </td>
@@ -385,10 +568,20 @@
                     [class.status-disabled]="!user.enabled">
 
                     <mat-icon>
-                      {{ user.enabled ? 'check_circle' : 'cancel' }}
+
+                      {{
+                        user.enabled
+                          ? 'check_circle'
+                          : 'cancel'
+                      }}
+
                     </mat-icon>
 
-                    {{ user.enabled ? 'Activo' : 'Inactivo' }}
+                    {{
+                      user.enabled
+                        ? 'Activo'
+                        : 'Inactivo'
+                    }}
 
                   </span>
 
@@ -411,9 +604,16 @@
                   *matCellDef="let user">
 
                   @if (user.createdAt) {
-                    {{ user.createdAt | date:'dd/MM/yyyy HH:mm' }}
+
+                    {{
+                      user.createdAt
+                        | date:'dd/MM/yyyy HH:mm'
+                    }}
+
                   } @else {
+
                     Sin fecha
+
                   }
 
                 </td>
@@ -442,30 +642,51 @@
                       aria-label="Editar usuario"
                       title="Editar usuario"
                       (click)="editUser(user)"
-                      [disabled]="saving || deletingUserId !== null">
+                      [disabled]="
+                        saving ||
+                        deletingUserId !== null
+                      ">
 
-                      <mat-icon>edit</mat-icon>
+                      <mat-icon>
+                        edit
+                      </mat-icon>
 
                     </button>
 
                     <button
                       mat-icon-button
                       type="button"
-                      aria-label="Eliminar usuario"
-                      title="Eliminar usuario"
                       (click)="deleteUser(user)"
                       [disabled]="
+                        isCurrentUser(user) ||
                         saving ||
-                        (deletingUserId !== null && !isDeleting(user.id))
+                        (
+                          deletingUserId !== null &&
+                          !isDeleting(user.id)
+                        )
+                      "
+                      [attr.aria-label]="
+                        isCurrentUser(user)
+                          ? 'No puedes eliminar tu propia cuenta'
+                          : 'Eliminar usuario'
+                      "
+                      [attr.title]="
+                        isCurrentUser(user)
+                          ? 'No puedes eliminar tu propia cuenta'
+                          : 'Eliminar usuario'
                       ">
 
                       @if (isDeleting(user.id)) {
 
-                        <mat-spinner diameter="20"></mat-spinner>
+                        <mat-spinner
+                          diameter="20">
+                        </mat-spinner>
 
                       } @else {
 
-                        <mat-icon>delete</mat-icon>
+                        <mat-icon>
+                          delete
+                        </mat-icon>
 
                       }
 

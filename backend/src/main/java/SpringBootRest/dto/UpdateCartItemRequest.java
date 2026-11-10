@@ -7,22 +7,14 @@ import java.util.UUID;
 
 public class UpdateCartItemRequest {
 
-    @NotNull
-    private UUID userId;
-
-    @NotNull
+    @NotNull(message = "Product ID is required")
     private UUID productId;
 
-    @Min(value = 1, message = "Quantity must be at least 1")
+    @Min(
+            value = 1,
+            message = "Quantity must be at least 1"
+    )
     private int quantity;
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
 
     public UUID getProductId() {
         return productId;

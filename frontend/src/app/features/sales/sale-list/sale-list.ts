@@ -9,6 +9,8 @@ import {
   DatePipe
 } from '@angular/common';
 
+import { HttpErrorResponse } from '@angular/common/http';
+
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,7 +22,10 @@ import {
   MatSnackBarModule
 } from '@angular/material/snack-bar';
 
-import { Observable, finalize } from 'rxjs';
+import {
+  Observable,
+  finalize
+} from 'rxjs';
 
 import { Auth } from '../../../core/services/auth';
 import { SaleService } from '../../../core/services/sale';
@@ -60,50 +65,57 @@ export class SaleList implements OnInit {
     this.loadSales();
   }
 
- loadSales(): void {
-  const userId = this.auth.getUserId();
+  loadSales(): void {
+    if (!this.auth.isLoggedIn()) {
+      this.handleMissingUser();
+      return;
+    }
 
-  if (!userId) {
-    this.handleMissingUser();
-    return;
+    this.loading = true;
+    this.errorMessage = '';
+
+    const salesRequest: Observable<Sale[]> =
+      this.auth.isAdmin()
+        ? this.saleService.getAllSales()
+        : this.saleService.getMySales();
+
+    salesRequest
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (sales: Sale[]) => {
+          this.sales = sales;
+          this.cdr.markForCheck();
+        },
+
+        error: (error: HttpErrorResponse) => {
+          console.error(
+            'Error cargando ventas:',
+            error
+          );
+
+          this.sales = [];
+
+          this.errorMessage = this.auth.isAdmin()
+            ? 'No se pudo cargar el listado de ventas.'
+            : 'No se pudo cargar tu historial de compras.';
+
+          this.snackBar.open(
+            this.errorMessage,
+            'Cerrar',
+            {
+              duration: 3000
+            }
+          );
+
+          this.cdr.markForCheck();
+        }
+      });
   }
-
-  this.loading = true;
-  this.errorMessage = '';
-
-  this.saleService
-    .getSales(userId)
-    .pipe(
-      finalize(() => {
-        this.loading = false;
-        this.cdr.markForCheck();
-      })
-    )
-    .subscribe({
-      next: sales => {
-        this.sales = sales;
-      },
-
-      error: error => {
-        console.error(
-          'Error cargando ventas:',
-          error
-        );
-
-        this.sales = [];
-        this.errorMessage =
-          'No se pudo cargar el historial de compras.';
-
-        this.snackBar.open(
-          this.errorMessage,
-          'Cerrar',
-          {
-            duration: 3000
-          }
-        );
-      }
-    });
-}
 
   get pageTitle(): string {
     return this.auth.isAdmin()
@@ -118,19 +130,27 @@ export class SaleList implements OnInit {
   }
 
   getSaleNumber(id: number): string {
-    return `#${id.toString().padStart(5, '0')}`;
+    return `#${id
+      .toString()
+      .padStart(5, '0')}`;
   }
 
   getTotalSpent(): number {
     return this.sales.reduce(
-      (total, sale) => total + sale.total,
+      (
+        total: number,
+        sale: Sale
+      ) => total + sale.total,
       0
     );
   }
 
   getTotalUnits(): number {
     return this.sales.reduce(
-      (total, sale) => total + sale.totalItems,
+      (
+        total: number,
+        sale: Sale
+      ) => total + sale.totalItems,
       0
     );
   }
@@ -142,7 +162,9 @@ export class SaleList implements OnInit {
     return price * quantity;
   }
 
-  getProductsLabel(totalItems: number): string {
+  getProductsLabel(
+    totalItems: number
+  ): string {
     return totalItems === 1
       ? '1 producto'
       : `${totalItems} productos`;
@@ -151,6 +173,7 @@ export class SaleList implements OnInit {
   private handleMissingUser(): void {
     this.sales = [];
     this.loading = false;
+
     this.errorMessage =
       'No hay un usuario autenticado.';
 

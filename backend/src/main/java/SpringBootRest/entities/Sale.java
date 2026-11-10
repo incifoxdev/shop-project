@@ -3,6 +3,7 @@ package SpringBootRest.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,8 @@ public class Sale {
 
     private LocalDateTime createdAt;
 
-    private double total;
+    @Column(precision = 19, scale = 2)
+    private BigDecimal total;
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SaleDetail> details = new ArrayList<>();

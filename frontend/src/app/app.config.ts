@@ -6,6 +6,8 @@ import {
   provideBrowserGlobalErrorListeners
 } from '@angular/core';
 
+import { registerLocaleData } from '@angular/common';
+
 import { provideRouter } from '@angular/router';
 
 import {
@@ -15,9 +17,13 @@ import {
 
 import { firstValueFrom } from 'rxjs';
 
+import localeEsCL from '@angular/common/locales/es-CL';
+
 import { routes } from './app.routes';
 import { jwtInterceptor } from './core/interceptors/jwt-interceptor';
 import { Auth } from './core/services/auth';
+
+registerLocaleData(localeEsCL, 'es-CL');
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -41,7 +47,7 @@ export const appConfig: ApplicationConfig = {
 
     {
       provide: LOCALE_ID,
-      useValue: 'es-ES'
+      useValue: 'es-CL'
     }
   ]
 };

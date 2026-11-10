@@ -142,29 +142,29 @@
 
             <ng-container matColumnDef="price">
 
-              <th
-                mat-header-cell
-                *matHeaderCellDef
-                mat-sort-header
-              >
-                Precio
-              </th>
+  <th
+    mat-header-cell
+    *matHeaderCellDef
+    mat-sort-header
+  >
+    Precio
+  </th>
 
-              <td
-                mat-cell
-                *matCellDef="let product"
-              >
-                {{
-                  product.price
-                    | currency:
-                      'EUR':
-                      'symbol':
-                      '1.2-2':
-                      'es-ES'
-                }}
-              </td>
+  <td
+    mat-cell
+    *matCellDef="let product"
+  >
+    {{
+      product.price
+        | currency:
+          'CLP':
+          'symbol':
+          '1.0-0':
+          'es-CL'
+    }}
+  </td>
 
-            </ng-container>
+</ng-container>
 
             <ng-container matColumnDef="stock">
 

@@ -18,4 +18,5 @@ export interface UpdateUserRequest {
   email: string;
   password?: string;
   enabled: boolean;
+  roles: string[];
 }
