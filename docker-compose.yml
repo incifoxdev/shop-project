@@ -3,6 +3,7 @@ services:
   postgres:
     image: postgres:17
     container_name: postgres-shop
+    restart: unless-stopped
 
     environment:
       POSTGRES_DB: shopdb
@@ -27,6 +28,7 @@ services:
       dockerfile: Dockerfile
 
     container_name: springbootrest
+    restart: unless-stopped
 
     depends_on:
       postgres:
@@ -46,6 +48,7 @@ services:
       dockerfile: Dockerfile
 
     container_name: shop-frontend
+    restart: unless-stopped
 
     depends_on:
       - api
