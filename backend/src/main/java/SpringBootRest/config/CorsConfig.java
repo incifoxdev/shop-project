@@ -19,7 +19,8 @@ public class CorsConfig {
                 registry.addMapping("/**")
                         .allowedOrigins(
                                 "http://localhost",
-                                "http://localhost:4200"
+                                "http://localhost:4200",
+				"https://incifox.org"	
                         )
                         .allowedMethods(
                                 "GET",
