@@ -33,71 +33,71 @@ public class PaymentController {
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    @PostMapping("/initiate")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> initiatePayment(
-            Authentication authentication
-    ) {
-        try {
-            User user = getUser(authentication);
-            String returnUrl = frontendUrl + "/payment/confirm";
+   @PostMapping("/initiate")
+@PreAuthorize("isAuthenticated()")
+public ResponseEntity<?> initiatePayment(
+        Authentication authentication
+) {
+    try {
+        User user = getUser(authentication);
+        String returnUrl = frontendUrl + "/payment/confirm?userId=" + user.getId();
 
-            WebpayPlusTransactionCreateResponse response =
-                    webpayService.initiatePayment(user, returnUrl);
+        WebpayPlusTransactionCreateResponse response =
+                webpayService.initiatePayment(user, returnUrl);
+
+        return ResponseEntity.ok(Map.of(
+                "url", response.getUrl(),
+                "token", response.getToken()
+        ));
+
+    } catch (Exception e) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", e.getMessage()));
+    }
+}
+
+   @PostMapping("/confirm")
+public ResponseEntity<?> confirmPayment(
+        @RequestParam("token_ws") String token,
+        @RequestParam(value = "userId", required = false) String userId
+) {
+    try {
+        WebpayPlusTransactionCommitResponse response =
+                webpayService.confirmPayment(token);
+
+        if (response.getResponseCode() != 0) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "error", "Pago rechazado",
+                            "code", response.getResponseCode()
+                    ));
+        }
+
+        try {
+            User user = userRepository.findById(UUID.fromString(userId))
+                    .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+            Sale sale = saleService.checkout(user);
+            emailService.sendPurchaseConfirmation(sale);
 
             return ResponseEntity.ok(Map.of(
-                    "url", response.getUrl(),
-                    "token", response.getToken()
+                    "sale", SaleMapper.toDTO(sale),
+                    "authorizationCode", response.getAuthorizationCode(),
+                    "cardNumber", response.getCardDetail().getCardNumber()
             ));
 
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+        } catch (SpringBootRest.exception.CartEmptyException e) {
+            return ResponseEntity.ok(Map.of(
+                    "authorizationCode", response.getAuthorizationCode(),
+                    "message", "Pago confirmado exitosamente"
+            ));
         }
+
+    } catch (Exception e) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", e.getMessage()));
     }
-
-    @PostMapping("/confirm")
-    public ResponseEntity<?> confirmPayment(
-            @RequestParam("token_ws") String token,
-            Authentication authentication
-    ) {
-        try {
-            WebpayPlusTransactionCommitResponse response =
-                    webpayService.confirmPayment(token);
-
-            if (response.getResponseCode() != 0) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of(
-                                "error", "Pago rechazado",
-                                "code", response.getResponseCode()
-                        ));
-            }
-
-            try {
-                User user = getUser(authentication);
-                Sale sale = saleService.checkout(user);
-
-                // Enviar email de confirmación de forma asíncrona
-                emailService.sendPurchaseConfirmation(sale);
-
-                return ResponseEntity.ok(Map.of(
-                        "sale", SaleMapper.toDTO(sale),
-                        "authorizationCode", response.getAuthorizationCode(),
-                        "cardNumber", response.getCardDetail().getCardNumber()
-                ));
-
-            } catch (SpringBootRest.exception.CartEmptyException e) {
-                return ResponseEntity.ok(Map.of(
-                        "authorizationCode", response.getAuthorizationCode(),
-                        "message", "Pago confirmado exitosamente"
-                ));
-            }
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
-        }
-    }
+}
 
     private User getUser(Authentication authentication) {
         return userRepository.findByEmail(authentication.getName())
