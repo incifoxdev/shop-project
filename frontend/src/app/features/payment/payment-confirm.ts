@@ -66,6 +66,7 @@ export class PaymentConfirmComponent implements OnInit {
 
   ngOnInit() {
     const token = this.route.snapshot.queryParamMap.get('token_ws');
+    const userId = this.route.snapshot.queryParamMap.get('userId');
 
     if (!token) {
       this.loading = false;
@@ -74,9 +75,10 @@ export class PaymentConfirmComponent implements OnInit {
       return;
     }
 
-    this.http.post<any>(
-      `${environment.apiUrl}/payment/confirm?token_ws=${token}`, {}
-    ).subscribe({
+    let url = `${environment.apiUrl}/payment/confirm?token_ws=${token}`;
+    if (userId) url += `&userId=${userId}`;
+
+    this.http.post<any>(url, {}).subscribe({
       next: (response) => {
         this.loading = false;
         this.success = true;
