@@ -68,7 +68,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/sales/sale-list/sale-list')
             .then(m => m.SaleList)
-      }
+      },
+{
+    path: 'payment/confirm',
+    loadComponent: () => import('./features/payment/payment-confirm')
+        .then(m => m.PaymentConfirmComponent)
+},
     ]
   },
 

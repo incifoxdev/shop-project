@@ -25,6 +25,7 @@ import {
 import { Auth } from '../../../core/services/auth';
 import { CartService } from '../../../core/services/cart';
 import { SaleService } from '../../../core/services/sale';
+import { PaymentService } from '../../../core/services/payment';
 
 import {
   Cart as CartModel,
@@ -62,6 +63,7 @@ export class Cart implements OnInit {
   constructor(
     private readonly cartService: CartService,
     private readonly saleService: SaleService,
+    private readonly paymentService: PaymentService,
     private readonly snackBar: MatSnackBar,
     private readonly auth: Auth,
     private readonly cdr: ChangeDetectorRef
@@ -70,369 +72,172 @@ export class Cart implements OnInit {
   ngOnInit(): void {
     if (!this.auth.isLoggedIn()) {
       this.loading = false;
-      this.errorMessage =
-        'No hay un usuario autenticado.';
-
-      this.snackBar.open(
-        this.errorMessage,
-        'Cerrar',
-        {
-          duration: 3000
-        }
-      );
-
+      this.errorMessage = 'No hay un usuario autenticado.';
+      this.snackBar.open(this.errorMessage, 'Cerrar', { duration: 3000 });
       this.cdr.markForCheck();
       return;
     }
-
     this.loadCart();
   }
 
   loadCart(): void {
-    if (!this.auth.isLoggedIn()) {
-      return;
-    }
+    if (!this.auth.isLoggedIn()) return;
 
     this.loading = true;
     this.errorMessage = '';
 
-    this.cartService
-      .getCart()
-      .subscribe({
-        next: (data: CartModel) => {
-          this.cart = data;
-          this.loading = false;
-
-          this.cdr.markForCheck();
-        },
-
-        error: error => {
-          console.error(
-            'Error cargando carrito:',
-            error
-          );
-
-          this.errorMessage =
-            'No se pudo cargar el carrito de compras.';
-
-          this.loading = false;
-
-          this.cdr.markForCheck();
-        }
-      });
+    this.cartService.getCart().subscribe({
+      next: (data: CartModel) => {
+        this.cart = data;
+        this.loading = false;
+        this.cdr.markForCheck();
+      },
+      error: error => {
+        console.error('Error cargando carrito:', error);
+        this.errorMessage = 'No se pudo cargar el carrito de compras.';
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   increaseQuantity(item: CartItem): void {
-    this.updateQuantity(
-      item,
-      item.quantity + 1
-    );
+    this.updateQuantity(item, item.quantity + 1);
   }
 
   decreaseQuantity(item: CartItem): void {
-    if (item.quantity <= 1) {
-      return;
-    }
-
-    this.updateQuantity(
-      item,
-      item.quantity - 1
-    );
+    if (item.quantity <= 1) return;
+    this.updateQuantity(item, item.quantity - 1);
   }
 
-  updateQuantity(
-    item: CartItem,
-    quantity: number
-  ): void {
-    if (
-      !this.auth.isLoggedIn() ||
-      quantity < 1
-    ) {
-      return;
-    }
+  updateQuantity(item: CartItem, quantity: number): void {
+    if (!this.auth.isLoggedIn() || quantity < 1) return;
 
-    const previousQuantity =
-      item.quantity;
-
-    this.updatingProductId =
-      item.productId;
-
+    const previousQuantity = item.quantity;
+    this.updatingProductId = item.productId;
     item.quantity = quantity;
-    item.subtotal =
-      item.price * quantity;
-
+    item.subtotal = item.price * quantity;
     this.recalculateCartTotals();
-
     this.cdr.markForCheck();
 
-    const data = {
-      productId: item.productId,
-      quantity
-    };
-
-    this.cartService
-      .updateQuantity(data)
-      .subscribe({
-        next: (updatedCart: CartModel) => {
-          this.cart = updatedCart;
-          this.updatingProductId = null;
-
-          this.cdr.markForCheck();
-        },
-
-        error: error => {
-          console.error(
-            'Error actualizando cantidad:',
-            error
-          );
-
-          item.quantity =
-            previousQuantity;
-
-          item.subtotal =
-            item.price * previousQuantity;
-
-          this.recalculateCartTotals();
-
-          this.updatingProductId = null;
-
-          this.snackBar.open(
-            this.getBackendErrorMessage(
-              error,
-              'No se pudo actualizar la cantidad.'
-            ),
-            'Cerrar',
-            {
-              duration: 3500
-            }
-          );
-
-          this.cdr.markForCheck();
-        }
-      });
+    this.cartService.updateQuantity({ productId: item.productId, quantity }).subscribe({
+      next: (updatedCart: CartModel) => {
+        this.cart = updatedCart;
+        this.updatingProductId = null;
+        this.cdr.markForCheck();
+      },
+      error: error => {
+        console.error('Error actualizando cantidad:', error);
+        item.quantity = previousQuantity;
+        item.subtotal = item.price * previousQuantity;
+        this.recalculateCartTotals();
+        this.updatingProductId = null;
+        this.snackBar.open(
+          this.getBackendErrorMessage(error, 'No se pudo actualizar la cantidad.'),
+          'Cerrar', { duration: 3500 }
+        );
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   removeProduct(item: CartItem): void {
-    if (!this.auth.isLoggedIn()) {
-      return;
-    }
+    if (!this.auth.isLoggedIn()) return;
 
-    this.removingProductId =
-      item.productId;
-
+    this.removingProductId = item.productId;
     this.cdr.markForCheck();
 
-    this.cartService
-      .removeProduct(item.productId)
-      .subscribe({
-        next: (updatedCart: CartModel) => {
-          this.cart = updatedCart;
-          this.removingProductId = null;
-
-          this.snackBar.open(
-            `${item.productName} fue eliminado del carrito.`,
-            'Cerrar',
-            {
-              duration: 3000
-            }
-          );
-
-          this.cdr.markForCheck();
-        },
-
-        error: error => {
-          console.error(
-            'Error eliminando producto:',
-            error
-          );
-
-          this.removingProductId = null;
-
-          this.snackBar.open(
-            'No se pudo eliminar el producto.',
-            'Cerrar',
-            {
-              duration: 3000
-            }
-          );
-
-          this.cdr.markForCheck();
-        }
-      });
+    this.cartService.removeProduct(item.productId).subscribe({
+      next: (updatedCart: CartModel) => {
+        this.cart = updatedCart;
+        this.removingProductId = null;
+        this.snackBar.open(
+          `${item.productName} fue eliminado del carrito.`,
+          'Cerrar', { duration: 3000 }
+        );
+        this.cdr.markForCheck();
+      },
+      error: error => {
+        console.error('Error eliminando producto:', error);
+        this.removingProductId = null;
+        this.snackBar.open('No se pudo eliminar el producto.', 'Cerrar', { duration: 3000 });
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   clearCart(): void {
-    if (
-      !this.auth.isLoggedIn() ||
-      !this.cart ||
-      this.cart.totalItems === 0
-    ) {
-      return;
-    }
+    if (!this.auth.isLoggedIn() || !this.cart || this.cart.totalItems === 0) return;
 
-    const confirmed = window.confirm(
-      '¿Deseas eliminar todos los productos del carrito?'
-    );
-
-    if (!confirmed) {
-      return;
-    }
+    const confirmed = window.confirm('¿Deseas eliminar todos los productos del carrito?');
+    if (!confirmed) return;
 
     this.clearingCart = true;
-
     this.cdr.markForCheck();
 
-    this.cartService
-      .clearCart()
-      .subscribe({
-        next: () => {
-          this.clearingCart = false;
-
-          if (this.cart) {
-            this.cart = {
-              ...this.cart,
-              totalItems: 0,
-              totalAmount: 0,
-              items: []
-            };
-          }
-
-          this.snackBar.open(
-            'El carrito fue vaciado.',
-            'Cerrar',
-            {
-              duration: 3000
-            }
-          );
-
-          this.cdr.markForCheck();
-        },
-
-        error: error => {
-          console.error(
-            'Error vaciando carrito:',
-            error
-          );
-
-          this.clearingCart = false;
-
-          this.snackBar.open(
-            'No se pudo vaciar el carrito.',
-            'Cerrar',
-            {
-              duration: 3000
-            }
-          );
-
-          this.cdr.markForCheck();
+    this.cartService.clearCart().subscribe({
+      next: () => {
+        this.clearingCart = false;
+        if (this.cart) {
+          this.cart = { ...this.cart, totalItems: 0, totalAmount: 0, items: [] };
         }
-      });
+        this.snackBar.open('El carrito fue vaciado.', 'Cerrar', { duration: 3000 });
+        this.cdr.markForCheck();
+      },
+      error: error => {
+        console.error('Error vaciando carrito:', error);
+        this.clearingCart = false;
+        this.snackBar.open('No se pudo vaciar el carrito.', 'Cerrar', { duration: 3000 });
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   checkout(): void {
     if (!this.auth.isLoggedIn()) {
-      this.snackBar.open(
-        'No hay un usuario autenticado.',
-        'Cerrar',
-        {
-          duration: 3000
-        }
-      );
-
+      this.snackBar.open('No hay un usuario autenticado.', 'Cerrar', { duration: 3000 });
       return;
     }
 
-    if (
-      !this.cart ||
-      this.cart.totalItems === 0
-    ) {
-      this.snackBar.open(
-        'El carrito está vacío.',
-        'Cerrar',
-        {
-          duration: 3000
-        }
-      );
-
+    if (!this.cart || this.cart.totalItems === 0) {
+      this.snackBar.open('El carrito está vacío.', 'Cerrar', { duration: 3000 });
       return;
     }
 
     const confirmed = window.confirm(
-      `¿Confirmas la compra por ${this.formatAmount(
-        this.cart.totalAmount
-      )}?`
+      `¿Confirmas la compra por ${this.formatAmount(this.cart.totalAmount)}?`
     );
-
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     this.processingCheckout = true;
-
     this.cdr.markForCheck();
 
-    this.saleService
-      .checkout()
-      .subscribe({
-        next: () => {
-          this.processingCheckout = false;
-
-          this.snackBar.open(
-            'Compra realizada correctamente.',
-            'Cerrar',
-            {
-              duration: 3500
-            }
-          );
-
-          this.cdr.markForCheck();
-
-          this.loadCart();
-        },
-
-        error: error => {
-          console.error(
-            'Error realizando compra:',
-            error
-          );
-
-          this.processingCheckout = false;
-
-          this.snackBar.open(
-            this.getBackendErrorMessage(
-              error,
-              'No se pudo realizar la compra.'
-            ),
-            'Cerrar',
-            {
-              duration: 3500
-            }
-          );
-
-          this.cdr.markForCheck();
-        }
-      });
+    this.paymentService.initiatePayment().subscribe({
+      next: (response) => {
+        window.location.href = `${response.url}?token_ws=${response.token}`;
+      },
+      error: (error) => {
+        console.error('Error iniciando pago:', error);
+        this.processingCheckout = false;
+        this.snackBar.open(
+          this.getBackendErrorMessage(error, 'No se pudo iniciar el pago.'),
+          'Cerrar', { duration: 3500 }
+        );
+        this.cdr.markForCheck();
+      }
+    });
   }
 
-  getSubtotal(
-    price: number,
-    quantity: number
-  ): number {
+  getSubtotal(price: number, quantity: number): number {
     return price * quantity;
   }
 
   isUpdating(item: CartItem): boolean {
-    return (
-      this.updatingProductId ===
-      item.productId
-    );
+    return this.updatingProductId === item.productId;
   }
 
   isRemoving(item: CartItem): boolean {
-    return (
-      this.removingProductId ===
-      item.productId
-    );
+    return this.removingProductId === item.productId;
   }
 
   isCartActionInProgress(): boolean {
@@ -445,52 +250,24 @@ export class Cart implements OnInit {
   }
 
   private recalculateCartTotals(): void {
-    if (!this.cart) {
-      return;
-    }
-
-    this.cart.totalItems =
-      this.cart.items.reduce(
-        (
-          total: number,
-          item: CartItem
-        ) => total + item.quantity,
-        0
-      );
-
-    this.cart.totalAmount =
-      this.cart.items.reduce(
-        (
-          total: number,
-          item: CartItem
-        ) =>
-          total +
-          item.price * item.quantity,
-        0
-      );
-  }
-
-  private getBackendErrorMessage(
-    error: any,
-    defaultMessage: string
-  ): string {
-    return (
-      error?.error?.message ||
-      error?.error?.error ||
-      defaultMessage
+    if (!this.cart) return;
+    this.cart.totalItems = this.cart.items.reduce(
+      (total: number, item: CartItem) => total + item.quantity, 0
+    );
+    this.cart.totalAmount = this.cart.items.reduce(
+      (total: number, item: CartItem) => total + item.price * item.quantity, 0
     );
   }
 
-  private formatAmount(
-    amount: number
-  ): string {
-    return new Intl.NumberFormat(
-      'es-CL',
-      {
-        style: 'currency',
-        currency: 'CLP',
-        maximumFractionDigits: 0
-      }
-    ).format(amount);
+  private getBackendErrorMessage(error: any, defaultMessage: string): string {
+    return error?.error?.message || error?.error?.error || defaultMessage;
+  }
+
+  private formatAmount(amount: number): string {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      maximumFractionDigits: 0
+    }).format(amount);
   }
 }
