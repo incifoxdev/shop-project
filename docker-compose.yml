@@ -38,9 +38,14 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
 
     ports:
       - "8080:8080"
+
+    volumes:
+      - product_images:/app/images
 
   frontend:
     build:
@@ -56,5 +61,9 @@ services:
     ports:
       - "80:80"
 
+    volumes:
+      - product_images:/usr/share/nginx/html/images
+
 volumes:
   postgres_data:
+  product_images:

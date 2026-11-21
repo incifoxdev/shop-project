@@ -55,6 +55,13 @@ export class ProductService {
     );
   }
 
+  uploadImage(id: string, formData: FormData): Observable<any> {
+    return this.http.post<any>(
+      `${this.apiUrl}/${id}/image`,
+      formData
+    );
+  }
+
   deleteProduct(id: string): Observable<void> {
     return this.http.delete<void>(
       `${this.apiUrl}/${id}`
