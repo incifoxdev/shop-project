@@ -51,7 +51,7 @@ public class WebpayService {
                 )
         );
 
-        return tx.create(buyOrder, sessionId, total.doubleValue(), returnUrl);
+        return tx.create(buyOrder, sessionId, total.longValue(), returnUrl);
     }
 
     public WebpayPlusTransactionCommitResponse confirmPayment(
