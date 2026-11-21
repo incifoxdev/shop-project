@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
@@ -60,15 +60,17 @@ export class PaymentConfirmComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
   ) {}
 
- ngOnInit() {
+  ngOnInit() {
     const token = this.route.snapshot.queryParamMap.get('token_ws');
 
     if (!token) {
       this.loading = false;
       this.errorMessage = 'Token de pago no encontrado';
+      this.cdr.detectChanges();
       return;
     }
 
@@ -78,17 +80,18 @@ export class PaymentConfirmComponent implements OnInit {
       next: (response) => {
         this.loading = false;
         this.success = true;
-        this.authorizationCode = response.authorizationCode;
+        this.authorizationCode = response.authorizationCode || 'Procesado';
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.loading = false;
-        // Si el error es carrito vacío el pago igual fue exitoso
         if (err.error?.error === 'Cart is empty') {
           this.success = true;
           this.authorizationCode = 'Procesado';
         } else {
           this.errorMessage = err.error?.error || 'Error al confirmar el pago';
         }
+        this.cdr.detectChanges();
       }
     });
   }
